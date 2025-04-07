@@ -3,9 +3,10 @@ from ctypes import cast
 
 import pygame
 
+from base.resource_manager import ResourceLoader
 from base.scene import LevelScene, SceneManager
 from game.character import Position
-from game.character.character_config import ConfigManager, ZombieConfig
+from game.character.character_config import ConfigManager
 from game.character.zombie import ConfigZombie
 
 
@@ -22,19 +23,13 @@ class Game:
 
         screen = pygame.display.set_mode(Game.screen_size)
         clock = pygame.time.Clock()
+
         # 加载资源文件
         # 加载所有僵尸
-        print(os.path.abspath(Game.zombie_path))
-        for directory in os.listdir(Game.zombie_path):
-            directory_path = os.path.join(Game.zombie_path, directory)
-            all_items = os.listdir(directory_path)
-            files = [item for item in all_items if os.path.isfile(os.path.join(directory_path, item))]
-            target_name = "{}.json".format(directory)
-            json_path = os.path.join(directory_path, target_name)
-            if target_name not in files: continue
-            ConfigManager().load('zombie', json_path)
+        ResourceLoader().load_zombie(Game.zombie_path)
 
         scene_manager = SceneManager()
+        # 测试游戏场景和僵尸
         test_level = LevelScene(pygame.image.load('./resources/scene/first_day/map0.jpg'), "first_day", scene_manager)
         test_config_zombie = ConfigZombie(ConfigManager().get_zombie_config('normal_zombie'), test_level)
         test_config_zombie.set_position(Position(700, 300))
