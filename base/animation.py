@@ -3,9 +3,10 @@ import enum
 from abc import abstractmethod
 from typing import Sequence, Optional, List, Union
 
+from PIL import Image
 import pygame
 from pygame import SurfaceType
-from PIL import Image
+
 
 class PlayMode(enum.Enum):
     """

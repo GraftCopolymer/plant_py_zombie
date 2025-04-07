@@ -5,7 +5,7 @@ import os.path
 import random
 import threading
 from abc import abstractmethod
-from typing import Literal, TypeVar
+from typing import Literal
 
 from base.animation import Animation, AnimationFactory, AnimationType
 
@@ -46,6 +46,12 @@ class ConfigManager:
         raise Exception("The Config {} haven't been loaded yet".format(config_id))
 
     def load(self, config_type: ConfigType, path: str) -> None:
+        """
+        加载指定的配置文件
+        :param config_type:
+        :param path:
+        :return:
+        """
         config = CharacterConfig.load_config(path, config_type)
         if self.exists(config.get_id()): raise Exception("Try to load config repeatedly")
         self._configs[config.get_id()] = config
@@ -102,7 +108,7 @@ class ZombieConfig(CharacterConfig):
     def parse(self, path: str) -> None:
         with open(path) as f:
             json_data = json.load(f)
-            directory: str = path[0:path.rfind('/')]
+            directory: str = os.path.dirname(path)
             if "id" not in json_data or len(json_data['id']) == 0:
                 raise Exception("The config has no config id or the id is empty")
             if "animations" not in json_data:
