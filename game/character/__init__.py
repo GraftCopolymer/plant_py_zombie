@@ -1,3 +1,3 @@
 import pygame.math
 
-Position = pygame.math.Vector2
+Position = pygame.Vector2

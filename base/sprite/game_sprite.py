@@ -26,6 +26,9 @@ class GameSprite(pygame.sprite.Sprite, abc.ABC):
     @abstractmethod
     def update(self, dt: float) -> None: pass
 
+    def get_z(self):
+        return self.z
+
     def set_position(self, position: Position):
         self.position = position
 

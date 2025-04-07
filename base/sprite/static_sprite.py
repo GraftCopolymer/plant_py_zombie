@@ -7,7 +7,7 @@ from game.character import Position
 
 class StaticSprite(GameSprite):
     def __init__(self, group: pygame.sprite.Group, image: SurfaceType, position: Position):
-        GameSprite.__init__(self, group, position)
+        GameSprite.__init__(self, group, image, position)
         self.image = image
         self.position = position
         self.rect = self.image.get_rect()

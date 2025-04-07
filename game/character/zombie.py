@@ -8,6 +8,7 @@ from ctypes import cast
 import pygame
 
 from base.animation import StatefulAnimation, OncePlayController
+from base.config import LAYERS
 from base.sprite.game_sprite import GameSprite
 from game.character import Position
 from game.character.character_config import ZombieConfig, ConfigManager
@@ -27,6 +28,7 @@ class AbstractZombie(GameSprite, abc.ABC):
         self.health = health
         assert init_state.value in animation.get_states()
         self.state = init_state
+        self.z = LAYERS['zombie0']
 
     def update(self, dt: float) -> None:
         GameSprite.update(self, dt)
@@ -64,8 +66,6 @@ class GenericZombie(AbstractZombie):
     def set_position(self, position: Position):
         super().set_position(position)
         if self.rect is not None:
-            if self.position.x < 0:
-                self.position.x = 0
             self.rect.center = (int(self.position.x), int(self.position.y))
 
     def attack(self):
