@@ -96,6 +96,7 @@ class ZombieConfig(CharacterConfig):
         self.config_id: str = ''
         self.init_state: str = ''
         self.speed: int = 0
+        # 解析配置文件
         self.parse(path)
 
     def parse(self, path: str) -> None:
@@ -128,6 +129,7 @@ class ZombieConfig(CharacterConfig):
                     self.animations[state].append(AnimationFactory.create_animation(animation_type, os.path.join(directory,anim['frames']), **anim))
             self.min_health = json_data['health']['min']
             self.max_health = json_data['health']['max']
+            assert self.min_health <= self.max_health # 需要保证最小生命值小于等于最大生命值
             self.speed = json_data['speed']
             # 初始状态默认为第一个读取的状态
             self.init_state = list(self.animations.keys())[0]
