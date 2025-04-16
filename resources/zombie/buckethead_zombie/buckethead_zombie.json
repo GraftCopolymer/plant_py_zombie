@@ -1,0 +1,10 @@
+{
+  "id": "buckethead_zombie",
+  "animation": "./buckethead_zombie_animation.json",
+  "health": {
+    "min": 1290,
+    "max": 1300
+  },
+  "zombie_offset": [0,20],
+  "speed": 15
+}

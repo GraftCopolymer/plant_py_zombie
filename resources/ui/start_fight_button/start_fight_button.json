@@ -1,0 +1,13 @@
+{
+  "#start_fight_button": {
+    "prototype": "#transparent_background_button",
+    "images": {
+      "normal_image": {
+        "path": "resources/ui/start_fight_button/StartFightButton.png"
+      },
+      "hovered_image": {
+        "path": "resources/ui/start_fight_button/StartFightButtonHover.png"
+      }
+    }
+  }
+}

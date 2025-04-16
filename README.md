@@ -43,7 +43,7 @@
 
 ```python
 scene_manager = SceneManager() # 场景管理器实例
-test_level = LevelScene(pygame.image.load('./resources/scene/first_day/map0.jpg'), "first_day", scene_manager) # 创建一个场景并指定由管理器管理
+test_level = LevelScene(pygame.image.load('./resources/level/first_day/map0.jpg'), "first_day", scene_manager) # 创建一个场景并指定由管理器管理
 test_config_zombie = ConfigZombie(ConfigManager().get_zombie_config('normal_zombie'), test_level) # 将僵尸加入一个指定的场景
 test_config_zombie.set_position(Position(700, 300))
 test_config_zombie.idle() # 设定僵尸状态

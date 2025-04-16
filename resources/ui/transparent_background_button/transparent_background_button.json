@@ -1,0 +1,17 @@
+{
+  "#transparent_background_button": {
+    "colours": {
+      "normal_bg": "#FFFFFF00",
+      "hovered_bg": "#FFFFFF00",
+      "normal_border": "#FFFFFF00",
+      "hovered_border": "#FFFFFF00",
+      "active_bg": "#FFFFFF00",
+      "selected_bg": "#FFFFFF00",
+      "selected_border": "#FFFFFF00",
+      "active_border": "#FFFFFF00"
+    },
+    "misc": {
+      "shadow_width": "0"
+    }
+  }
+}

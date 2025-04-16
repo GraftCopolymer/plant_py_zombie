@@ -1,0 +1,44 @@
+{
+  "id": "buckethead_zombie_animation",
+  "animations": {
+    "idle": [
+      {
+        "type": "gif",
+        "frames": "./1.gif",
+        "interval": 100
+      }
+    ],
+    "attack": [
+      {
+        "type": "gif",
+        "frames": "./BucketheadZombieAttack.gif",
+        "interval": 100
+      }
+    ],
+    "walk": [
+      {
+        "type": "gif",
+        "frames": "./Zombie.gif",
+        "interval": 100,
+        "offset": [65, 25]
+      }
+    ],
+    "walk_with_bucket": [
+      {
+        "type": "gif",
+        "frames": "./BucketheadZombie.gif",
+        "interval": 100,
+        "offset": [65, 20]
+      }
+    ],
+    "dying": [
+      {
+        "type": "gif",
+        "frames": "./ZombieDie.gif",
+        "play_mode": "once",
+        "offset": [65, 20]
+      }
+    ]
+  },
+  "init_state": "idle"
+}

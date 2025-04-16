@@ -22,6 +22,16 @@ LAYERS = gen_layers([
     "zombie1",
     "zombie2",
     "zombie3",
+    "zombie4",
+    "zombie5",
+    "zombie6",
+    "zombie7",
+    "zombie8",
     "bullet",
-    "main"
+    "main",
+    'highlight'
 ])
+
+PLANTS_DIR = {
+    "pea_shooter": "./resources/plant/pea_shooter"
+}

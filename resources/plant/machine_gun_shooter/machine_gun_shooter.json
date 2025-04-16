@@ -1,0 +1,12 @@
+{
+  "id": "machine_gun_shooter_animation",
+  "animations": {
+    "idle": [
+      {
+        "type": "sprite_sheet",
+        "frames": "./plant_4.png",
+        "frames_count": 8
+      }
+    ]
+  }
+}

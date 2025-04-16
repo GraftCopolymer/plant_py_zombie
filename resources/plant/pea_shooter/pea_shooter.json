@@ -1,0 +1,12 @@
+{
+  "id": "pea_shooter_animation",
+  "animations": {
+    "idle": [
+      {
+        "type": "sprite_sheet",
+        "frames": "./plant_1.png",
+        "frames_count": 8
+      }
+    ]
+  }
+}

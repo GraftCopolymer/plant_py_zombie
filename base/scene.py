@@ -3,15 +3,10 @@ from __future__ import annotations
 import abc
 import threading
 from abc import abstractmethod
-from typing import Union
-
-import pygame.math
-from pygame import SurfaceType
-
-from base.cameragroup import CameraGroup
-from base.config import LAYERS
-from base.sprite.game_sprite import GameSprite
-from base.sprite.static_sprite import StaticSprite
+from typing import Union, Optional
+from pygame import Surface
+from pygame_gui import UIManager
+from pygame_gui.core import UIElement
 
 class SceneManager:
     """
@@ -19,6 +14,7 @@ class SceneManager:
     """
     _instance = None
     _lock = threading.Lock()
+    _init = False
     def __new__(cls, *args, **kwargs):
         # 确保线程安全
         if not cls._instance:
@@ -29,76 +25,133 @@ class SceneManager:
         return cls._instance
 
     def __init__(self):
-        # self.scenes被视为栈使用
-        self.scenes: list[AbstractScene] = []
+        if not self.__class__._init:
+            # self.scenes被视为栈使用
+            self.scenes: list[AbstractScene] = []
+            self.__class__._init = True
 
     def update(self, dt: float):
         if len(self.scenes) > 0:
-            self.scenes[-1].update(dt)
+            self.top().update(dt)
 
-    def draw(self, screen: SurfaceType):
+    def draw(self, screen: Surface):
         screen.fill('black')
         if len(self.scenes) > 0:
-            self.scenes[-1].draw(screen)
+            self.top().draw(screen)
+
+    def process_ui_event(self, event) -> None:
+        self.top().process_ui_event(event)
 
     def push_scene(self, scene: AbstractScene):
+        # detach掉当前场景
+        if not self.is_empty():
+            self.top().detach_scene()
         self.scenes.append(scene)
+        scene.setup_scene(self)
+        self.refresh_ui()
 
     def pop_scene(self):
-        if len(self.scenes) > 0:
+        if not self.is_empty():
+            self.top().detach_scene()
             self.scenes.pop()
+            self.top().setup_scene(self)
+            self.refresh_ui()
+            print('popped')
+        else:
+            raise Exception('There is no scenes')
+
+    def pop_until(self, scene: AbstractScene, include: bool=False) -> int:
+        """
+        弹出栈顶到指定场景之间的所有场景
+        :param scene:
+        :param include: 是否弹出参数传入的指定scene，默认不弹出
+        :return: 弹出的场景总数
+        """
+        count = 0
+        if scene not in self.scenes:
+            raise Exception('No such scene')
+        if self.is_empty():
+            raise Exception('There is no scenes')
+        cur = self.top()
+        while cur != scene:
+            self.pop_scene()
+            cur = self.top()
+            count += 1
+        if include:
+            self.pop_scene()
+            count += 1
+        return count
+
+    def refresh_ui(self):
+        """
+        根据当前顶层Scene重建UI
+        """
+        if self.is_empty():
+            raise Exception('There is no scene')
+        self.clear_ui_element()
+        self.top().setup_ui()
+
+    def clear_ui_element(self) -> None:
+        self.top().clear_and_reset()
+
+    def add_ui_element(self, elements: list[UIElement]) -> None:
+        """
+        将传入的UI元素加入当前ui_manager
+        """
+        for ele in elements:
+            ele.ui_manager = self.top().ui_manager
 
     def get_scene_number(self):
         return len(self.scenes)
+
+    def top(self) -> AbstractScene:
+        if not self.is_empty():
+            return self.scenes[-1]
+        raise Exception('There is no scenes')
+
+    def is_empty(self) -> bool:
+        return len(self.scenes) == 0
 
 class AbstractScene(abc.ABC):
     """
     抽象场景
     """
-    def __init__(self, name: str, manager: SceneManager):
-        self.manager = manager
-        self.manager.push_scene(self)
+    def __init__(self, name: str):
         self.name = name
+        self.manager: Union[SceneManager, None] = None
+        self.ui_manager: Optional[UIManager] = None
 
     @abstractmethod
     def update(self, dt: float) -> None: pass
 
     @abstractmethod
-    def draw(self, screen: SurfaceType, bgsurf=None, special_flags=0) -> None: pass
+    def draw(self, screen: Surface, bgsurf=None, special_flags=0) -> None: pass
 
     @abstractmethod
-    def add(self, *sprite: Union[list[GameSprite], GameSprite]) -> None: pass
+    def setup_ui(self, *args, **kwargs) -> None:
+        """
+        每次切换到该场景时都会调用, 用于重建UI
+        """
+        pass
 
-class LevelScene(AbstractScene):
-    def __init__(self, background_image: SurfaceType,name: str, manager: SceneManager):
-        super().__init__(name, manager)
-        self.position = pygame.math.Vector2((0,0))
-        self.camera = CameraGroup()
-        self.background = StaticSprite(self.camera, background_image, self.position)
-        self.background.z = LAYERS['background']
-        self.camera.add(self.background)
+    def clear_and_reset(self):
+        if self.ui_manager is not None:
+            self.ui_manager.clear_and_reset()
 
-    def draw(self, screen: SurfaceType, bgsurf=None, special_flags=0) -> None:
-        self.camera.draw(screen, bgsurf, special_flags)
+    def setup_scene(self, manager: SceneManager) -> None:
+        """
+        场景需要显示时调用
+        """
+        self.manager = manager
 
-    def update(self, dt: float):
-        super().update(dt)
-        self.camera.update(dt)
+    def process_ui_event(self, event) -> None:
+        if self.ui_manager is not None:
+            self.ui_manager.process_events(event)
 
-    def set_camera(self, camera: CameraGroup):
-        # 清空原相机
-        self.camera.empty()
-        # 将背景图添加到camera
-        self.background.group = camera
-        self.camera.add(self.background)
+    @abstractmethod
+    def detach_scene(self):
+        """
+        从该场景切走时需要执行的清理工作，例如取消订阅事件等
+        """
+        pass
 
-    def add(self, *sprite: Union[list[GameSprite], GameSprite]) -> None:
-        self.camera.add(sprite)
-
-    def get_group(self):
-        return self.camera
-
-    @classmethod
-    def from_path(cls, image_path: str ,name: str, manager: SceneManager):
-        surface = pygame.image.load(image_path).convert_alpha()
-        return cls(surface, name, manager)

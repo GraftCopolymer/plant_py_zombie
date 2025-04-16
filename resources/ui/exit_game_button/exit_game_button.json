@@ -1,0 +1,16 @@
+{
+  "#exit_game_button": {
+    "prototype": "#transparent_background_button",
+    "colours": {
+      "normal_text": "#000000",
+      "hovered_text": "#000000"
+    },
+    "font": {
+      "name": "montserrat",
+      "size": "24",
+      "bold": "0",
+      "italic": "1",
+      "regular_path": "resources/ui/STHeiti Light.ttc"
+    }
+  }
+}

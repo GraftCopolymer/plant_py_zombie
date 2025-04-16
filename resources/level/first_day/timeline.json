@@ -1,0 +1,60 @@
+{
+  "duration": 180,
+  "max_concurrent_zombies": 10,
+  "default_spawn_interval": 3,
+  "waves": [
+    {
+      "time": 0,
+      "spawn_interval": 0,
+      "zombies": [
+        {
+          "type": "normal_zombie",
+          "frequency": 5
+        },
+        {
+          "type": "buckethead_zombie",
+          "frequency": 1
+        }
+      ]
+    },
+    {
+      "time": 30,
+      "spawn_interval": 0,
+      "zombies": [
+        {
+          "type": "normal_zombie",
+          "frequency": 4
+        },
+        {
+          "type": "buckethead_zombie",
+          "frequency": 1
+        }
+      ]
+    },
+    {
+      "time": 60,
+      "spawn_interval": 5,
+      "zombies": [
+        {
+          "type": "buckethead_zombie",
+          "frequency": 2
+        }
+      ]
+    },
+    {
+      "time": 120,
+      "spawn_interval": 0,
+      "warning": "A huge wave is coming!",
+      "zombies": [
+        {
+          "type": "normal_zombie",
+          "frequency": 3
+        },
+        {
+          "type": "buckethead_zombie",
+          "frequency": 3
+        }
+      ]
+    }
+  ]
+}

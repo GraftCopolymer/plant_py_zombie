@@ -1,0 +1,55 @@
+{
+  "id": "normal_zombie_animation",
+  "animations": {
+    "idle": [
+      {
+        "type": "gif",
+        "frames": "./1.gif",
+        "interval": 100,
+        "offset": [65, 20]
+      },
+      {
+        "type": "gif",
+        "frames": "./2.gif",
+        "interval": 100,
+        "offset": [65, 20]
+      },
+      {
+        "type": "gif",
+        "frames": "./3.gif",
+        "interval": 100,
+        "offset": [65, 20]
+      }
+    ],
+    "attack": [
+      {
+        "type": "gif",
+        "frames": "./ZombieAttack.gif",
+        "interval": 100
+      }
+    ],
+    "walk": [
+      {
+        "type": "gif",
+        "frames": "./Zombie.gif",
+        "interval": 100,
+        "offset": [65, 20]
+      },
+      {
+        "type": "gif",
+        "frames": "./Zombie2.gif",
+        "interval": 100,
+        "offset": [65, 20]
+      }
+    ],
+    "dying": [
+      {
+        "type": "gif",
+        "frames": "./ZombieDie.gif",
+        "play_mode": "once",
+        "offset": [65, 20]
+      }
+    ]
+  },
+  "init_state": "idle"
+}

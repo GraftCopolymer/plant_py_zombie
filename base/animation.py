@@ -1,11 +1,13 @@
+from __future__ import annotations
 import abc
 import enum
+import os
 from abc import abstractmethod
-from typing import Sequence, Optional, List, Union
+from typing import Sequence, Optional, List, Union, Any
 
 from PIL import Image
 import pygame
-from pygame import SurfaceType
+from pygame import Surface
 
 
 class PlayMode(enum.Enum):
@@ -28,6 +30,7 @@ class PlayMode(enum.Enum):
 class AnimationType(enum.Enum):
     MULTI_IMAGE = 'multi_image'
     GIF = "gif"
+    SPRITE_SHEET = 'sprite_sheet'
 
 
 class Animation:
@@ -36,10 +39,10 @@ class Animation:
     对应AnimationType的multi_image
     """
     def __init__(self,
-                 images: Sequence[SurfaceType],
+                 images: Sequence[Surface],
                  play_mode: PlayMode = PlayMode.LOOP,
                  interval: int = 150,
-                 init_frame: Optional[int] = 0, play_speed_scale: Optional[float] = 1.0):
+                 init_frame: Optional[int] = 0, play_speed_scale: Optional[float] = 1.0, offset: pygame.Vector2=pygame.Vector2(0,0)):
         """
         :param images: 图片列表，将从该列表选取帧显示
         :param play_mode: 播放模式 PlayMode 类型
@@ -65,6 +68,8 @@ class Animation:
         self.interval = interval / play_speed_scale
         # 自上一次更新帧以来的累计时间(ms)
         self.time_accumulate = 0
+        # 帧偏移，含义同GameSprite中的offset字段
+        self.offset = offset
 
     def animate(self, dt: float):
         # 暂停时不执行动画逻辑
@@ -94,16 +99,16 @@ class Animation:
     def pause(self):
         self.is_pause = True
 
-    def get_image(self) -> SurfaceType:
+    def get_image(self) -> Surface:
         return self.images[self.current_frame]
 
     @classmethod
     def from_paths(cls, image_paths: List[str], play_mode: PlayMode, interval: int,
-                   init_frame: Optional[int] = 0, play_speed_scale: Optional[float] = 1.0):
+                   init_frame: Optional[int] = 0, play_speed_scale: Optional[float] = 1.0, offset: pygame.Vector2 = pygame.Vector2(0,0)):
         images = []
         for path in image_paths:
             images.append(pygame.image.load(path).convert())
-        return cls(images, play_mode, interval, init_frame, play_speed_scale)
+        return cls(images, play_mode, interval, init_frame, play_speed_scale, offset)
 
 
 class GifAnimation(Animation):
@@ -113,20 +118,55 @@ class GifAnimation(Animation):
     """
 
     def __init__(self, path: str, play_mode: PlayMode = PlayMode.LOOP, interval: int = 150,
-                 init_frame: Optional[int] = 0, play_speed_scale: Optional[float] = 1.0, ):
-        Animation.__init__(self, self._load_gif(path), play_mode, interval, init_frame, play_speed_scale)
+                 init_frame: Optional[int] = 0, play_speed_scale: Optional[float] = 1.0, offset: pygame.Vector2=pygame.Vector2(0,0)):
+        Animation.__init__(self, self._load_gif(path), play_mode, interval, init_frame, play_speed_scale, offset)
 
-    def _load_gif(self, gif_path: str) -> list[SurfaceType]:
+    def _load_gif(self, gif_path: str) -> list[Surface]:
         gif = Image.open(gif_path)
         images = []
         while True:
             frame = gif.convert("RGBA")
-            pygame_frame = pygame.image.fromstring(frame.tobytes(), frame.size, "RGBA").convert_alpha()
+            pygame_frame = pygame.image.frombytes(frame.tobytes(), frame.size, "RGBA").convert_alpha()
             images.append(pygame_frame)
             try:
                 gif.seek(len(images))
             except EOFError:
                 return images
+
+class SpriteSheetAnimation(Animation):
+    """
+    精灵动画集动画
+    对应AnimationType.SPRITE_SHEET
+    """
+    def __init__(self, path: str, frames_count: int, play_mode: PlayMode = PlayMode.LOOP, interval: int = 150,
+                 init_frame: Optional[int] = 0, play_speed_scale: Optional[float] = 1.0, offset: pygame.Vector2=pygame.Vector2(0,0)):
+        Animation.__init__(self, self._load_sprite_sheet(path, frames_count),play_mode, interval, init_frame, play_speed_scale, offset)
+
+    def _load_sprite_sheet(self, sheet_path: str, frames_count: int) -> list[Surface]:
+        """
+        加载精灵图集
+        :param sheet_path: 精灵图集路径
+        :return: 精灵图集对应的Surface列表
+        """
+        # 用 Pillow 加载图集
+        image = Image.open(sheet_path).convert("RGBA")
+        sheet_width, sheet_height = image.size
+
+        frames = []
+        frame_width = sheet_width // frames_count
+        frame_height = sheet_height
+
+        # 横向排列的帧
+        for i in range(frames_count):
+            # 裁剪出帧区域（左，上，右，下）
+            box = (i * frame_width, 0, (i + 1) * frame_width, frame_height)
+            frame = image.crop(box)
+
+            # 转换为 pygame.Surface
+            pygame_image = pygame.image.frombytes(frame.tobytes(), frame.size, "RGBA").convert_alpha()
+            frames.append(pygame_image)
+
+        return frames
 
 class AnimationFactory:
     @staticmethod
@@ -136,9 +176,10 @@ class AnimationFactory:
                          interval: int = 150,
                          init_frame: Optional[int] = 0,
                          play_speed_scale: Optional[float] = 1.0,
+                         offset: list[float, float] = (0,0),
                          **kwargs) -> Animation:
         """
-        动画工厂方法：根据类型创建 Animation 或 GifAnimation 实例
+        动画工厂方法：根据类型创建 Animation、GifAnimation、SpriteSheetAnimation 实例
 
         :param animation_type: 动画类型，'multi_image' 或 'gif'
         :param source: 如果是 multi_image，则是图片路径列表；如果是 gif，则是 gif 文件路径
@@ -146,6 +187,7 @@ class AnimationFactory:
         :param interval: 帧间隔时间
         :param init_frame: 初始帧
         :param play_speed_scale: 播放速度因子
+        :param offset: 帧偏移
         :return: 对应类型的 Animation 实例
         """
 
@@ -153,19 +195,57 @@ class AnimationFactory:
         interval = kwargs.get('interval', interval)
         init_frame = kwargs.get('init_frame', init_frame)
         play_speed_scale = kwargs.get('play_speed_scale', play_speed_scale)
+        offset = pygame.Vector2(kwargs.get('offset', offset))
 
         if animation_type == AnimationType.MULTI_IMAGE:
             if not isinstance(source, list):
                 raise TypeError("multi_image 类型的 source 应该是 List[str]")
-            return Animation.from_paths(source, play_mode, interval, init_frame, play_speed_scale)
+            return Animation.from_paths(source, play_mode, interval, init_frame, play_speed_scale, offset)
 
         elif animation_type == AnimationType.GIF:
             if not isinstance(source, str):
                 raise TypeError("gif 类型的 source 应该是 str（gif 路径）")
-            return GifAnimation(source, play_mode, interval, init_frame, play_speed_scale)
+            return GifAnimation(source, play_mode, interval, init_frame, play_speed_scale, offset)
+
+        elif animation_type == AnimationType.SPRITE_SHEET:
+            frames_count: Union[int, None] = kwargs.get('frames_count', None)
+            if frames_count is None: raise ValueError("请提供精灵图集的帧数量")
+            return SpriteSheetAnimation(source, frames_count, play_mode, interval, init_frame, play_speed_scale, offset)
 
         else:
             raise ValueError(f"未知的动画类型: {animation_type}")
+
+class AnimationLoader:
+    @staticmethod
+    def load(animation_data: dict[str, list[dict[str, Any]]], root_path: str) -> dict[str, list[Animation]]:
+        """
+        从字典数据加载动画
+        :param animation_data: 动画的字典数据，需符合一定的格式，见README
+        :param root_path: 动画数据中的资源的根路径
+        :return: 有状态动画对象
+        """
+        animations: dict[str, list[Animation]] = {}
+        state: str
+        anims: list[dict[str, Any]]
+        for state, anims in animation_data.items():
+            # 解析动画
+            if not isinstance(anims, list): raise Exception("Each value of state of animations must be list type")
+            if len(anims) == 0: raise Exception("Each value of state of animations mustn't be empty")
+            anim: dict[str, str]
+            for anim in anims:
+                animation_type: AnimationType = AnimationType(anim['type'])
+                if state not in animations:
+                    animations[state] = []
+                source = None
+                if isinstance(anim['frames'], str):
+                    source = os.path.join(root_path, anim['frames'])
+                elif isinstance(anim['frames'], list):
+                    source = []
+                    for p in anim['frames']:
+                        source.append(os.path.join(root_path, p))
+                animations[state].append(
+                    AnimationFactory.create_animation(animation_type, source, **anim))
+        return animations
 
 
 class StatefulAnimation:
@@ -202,15 +282,17 @@ class StatefulAnimation:
     def get_current_state(self) -> str:
         return self.state
 
-    def get_current_image(self) -> SurfaceType:
-        return self.animations[self.state].get_image()
+    def get_current_image(self) -> Surface:
+        return self.animations[self.state].get_image().copy()
+
+    def get_current_animation(self) -> Animation:
+        return self.animations[self.state]
 
     def update(self, dt: float):
         self.animations[self.state].update(dt)
 
     def get_current_controller(self):
         return self.animations[self.state].controller
-
 
 class AnimatePlayController(abc.ABC):
     def __init__(self, frames: int, init_frame: Optional[int] = 0):
