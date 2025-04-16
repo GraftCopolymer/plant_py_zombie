@@ -1,11 +1,14 @@
 # plant_py_zombie
-## 添加僵尸（Zombie）
 
-在`resources/zombie/`目录下新建一个文件夹，命名为要添加的僵尸名，这里以普通僵尸为例：
+如下内容不再适用，请阅读已有json文件
 
-新建`resources/zombie/normal_zombie`目录，在该目录中创建文件`normal_zombie.json`注意，json文件名一定要与目录名一致，否则不会被扫描到。
+## ~~添加僵尸（Zombie）~~
 
-接下来，在`normal_zombie.json`编写僵尸的配置，格式如下：
+~~在`resources/zombie/`目录下新建一个文件夹，命名为要添加的僵尸名，这里以普通僵尸为例：~~
+
+~~新建`resources/zombie/normal_zombie`目录，在该目录中创建文件`normal_zombie.json`注意，json文件名一定要与目录名一致，否则不会被扫描到。~~
+
+~~接下来，在`normal_zombie.json`编写僵尸的配置，格式如下：~~
 
 ```json
 {
@@ -39,7 +42,7 @@
 }
 ```
 
-游戏启动前会自动扫描`resources/zombie/`文件夹下的所有僵尸配置并进行加载，要创建一个僵尸实例，请实例化`ConfigZombie`类并传入一个`ZombieConfig`，`ZombieConfig`可通过`ConfigManager`获取：
+~~游戏启动前会自动扫描`resources/zombie/`文件夹下的所有僵尸配置并进行加载，要创建一个僵尸实例，请实例化`ConfigZombie`类并传入一个`ZombieConfig`，`ZombieConfig`可通过`ConfigManager`获取：~~
 
 ```python
 scene_manager = SceneManager() # 场景管理器实例
@@ -49,7 +52,7 @@ test_config_zombie.set_position(Position(700, 300))
 test_config_zombie.idle() # 设定僵尸状态
 ```
 
-然后在游戏循环中调用
+~~然后在游戏循环中调用~~
 
 ```python
 scene_manager.update(delta)
