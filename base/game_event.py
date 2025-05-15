@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from game.character.plant import AbstractPlant
     from base.game_grid import AbstractPlantCell
     from game.character.zombie import AbstractZombie
+    from game.ui.plant_card import PlantCard
 
 
 T = TypeVar("T", bound="Event")
@@ -47,6 +48,7 @@ class EventBus:
             return cls._instance
 
     def process_event(self):
+        print(f"当前队列处理器个数: {len([handler for sh in self._subscribers.values() for handler in sh])}")
         for event in pygame.event.get():
             SceneManager().process_ui_event(event)
             self._dispatch_event(event)
@@ -210,3 +212,33 @@ class NextLevelEvent(Event):
     def __init__(self, level: LevelScene):
         super().__init__()
         self.next_level = level
+
+class StartFightEvent(Event):
+    def __init__(self):
+        super().__init__()
+
+class SelectPlantCardToBankEvent(Event):
+    def __init__(self, plant_card: 'PlantCard'):
+        super().__init__()
+        self.plant_card = plant_card
+
+class RemovePlantCardFromBankEvent(Event):
+    def __init__(self, plant_card: 'PlantCard'):
+        super().__init__()
+        self.plant_card = plant_card
+
+class PlantCardStartColdDown(Event):
+    """
+    植物卡片开始冷却
+    """
+    def __init__(self, card: 'PlantCard'):
+        super().__init__()
+        self.plant_card = card
+
+class PlantCardEndColdDown(Event):
+    """
+    植物卡片冷却结束
+    """
+    def __init__(self, card: 'PlantCard'):
+        super().__init__()
+        self.plant_card = card

@@ -29,9 +29,20 @@ LAYERS = gen_layers([
     "zombie8",
     "bullet",
     "main",
-    'highlight'
+    'highlight',
+    'sun',
+    'text'
 ])
 
 PLANTS_DIR = {
     "pea_shooter": "./resources/plant/pea_shooter"
 }
+
+# 自然生成阳光的时间间隔范围, 单位ms
+SUN_GEN_INTERVAL_RANGE = [1000, 1500]
+
+# 可用植物配置文件
+AVAILABLE_PLANTS = 'resources/available_plants.json'
+
+# 字体目录
+FONT_PATH = 'resources/ui/STHeiti Light.ttc'

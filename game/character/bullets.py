@@ -9,6 +9,7 @@ from pygame import Surface, Vector2
 from base.resource_loader import ResourceLoader
 from base.sprite.game_sprite import GameSprite
 from game.character.zombie import AbstractZombie
+from utils.utils import collide
 
 if TYPE_CHECKING:
     from game.level.level_scene import LevelScene
@@ -34,11 +35,13 @@ class Bullet(GameSprite, abc.ABC):
         from game.game import Game
         self.bound_rect = Game.screen.get_rect()
 
-    def setup_sprite(self, owner, level: 'LevelScene'):
+    def setup_sprite(self, group: pygame.sprite.Group, owner, level: 'LevelScene'):
+        super().setup_sprite()
         self.owner = owner
         self.level = level
         # 将自己添加到场景中
         self.level.add_bullet(self)
+        self.group = group
 
     def debug_draw(self, surface: Surface, camera_pos: Vector2) -> None:
         rect = self.rect.copy()
@@ -47,13 +50,7 @@ class Bullet(GameSprite, abc.ABC):
 
     @abstractmethod
     def update(self, dt: float) -> None:
-        """
-        GameSprite的update方法考虑了rect_offset，但是子弹是跟随其owner产生
-        若考虑子弹本身的rect_offset，则会导致重复计算子弹偏移, 故此处不调用父类update方法
-        """
         super().update(dt)
-
-        pass
 
     def change_direction(self, new_direct: pygame.Vector2):
         self.direction = new_direct.normalize()
@@ -85,8 +82,8 @@ class StraightForwardBullet(Bullet, abc.ABC):
         offset.y = random.randint(-18, -12)
         return offset
 
-    def setup_sprite(self, owner, level: 'LevelScene'):
-        super().setup_sprite(owner, level)
+    def setup_sprite(self, group: pygame.sprite.Group, owner, level: 'LevelScene'):
+        super().setup_sprite(group, owner, level)
         self.rect = self.image.get_rect()
         self.rect.center = tuple(
             pygame.Vector2(self.owner.rect.center) - self.rect_offset + self.random_bullet_offset())
@@ -102,7 +99,8 @@ class StraightForwardBullet(Bullet, abc.ABC):
         super().update(dt)
         # 碰撞检测
         self.rect = self.image.get_bounding_rect().move(self.world_pos)
-        collide_sprites = pygame.sprite.spritecollide(self, self.owner.group, False)
+
+        collide_sprites = pygame.sprite.spritecollide(self, self.owner.group, False, collided=collide)
         zombies: list[AbstractZombie] = []
         for sprite in collide_sprites:
             if isinstance(sprite, AbstractZombie) and sprite.row == self.owner.cell.row:
@@ -115,7 +113,7 @@ class StraightForwardBullet(Bullet, abc.ABC):
             self.hit_zombie(random.choice(alive_zombies))
 
         from game.game import Game
-        if not Game.in_screen(self):
+        if not Game.bullet_in_screen(self):
             print('删除子弹')
             self.level.remove_bullet(self)
             return

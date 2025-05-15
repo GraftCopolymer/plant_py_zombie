@@ -1,0 +1,5 @@
+{
+  "#plant_selector_container_panel_like_button": {
+    "prototype": "#transparent_background_button"
+  }
+}

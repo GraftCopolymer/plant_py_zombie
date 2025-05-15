@@ -16,10 +16,11 @@ from game.character import Position
 from game.character.character_config import ZombieConfig, CharacterConfigManager
 from game.level.state_machine import State, StateMachine
 from game.level.zombie_creator import ZombieCreator
+from utils.utils import collide
 
 if TYPE_CHECKING:
     from game.level.level_scene import LevelScene
-
+    from game.character.plant import AbstractPlant
 
 class AbstractZombieStateMachine(StateMachine, abc.ABC):
     def __init__(self):
@@ -96,6 +97,7 @@ class AbstractZombie(GameSprite, abc.ABC):
 
     def setup_sprite(self, group: pygame.sprite.Group, level: 'LevelScene', row: int = 0,
                      move_to_row: bool = False) -> None:
+        super().setup_sprite()
         self.group = group
         self.level = level
         self.change_row(row)
@@ -235,9 +237,13 @@ class GenericZombie(AbstractZombie):
         # 增加蓝色遮罩
         blue_mask = Surface(self.image.get_size())
         blue_mask.fill((168, 0, 0, 0))
+        # 通过减去红色来实现深蓝色色调
         self.image.blit(blue_mask, (0,0), special_flags=pygame.BLEND_RGB_SUB)
 
     def hit_flash(self, dt: float):
+        """
+        受击时播放白色闪光
+        """
         alpha = int(100 * max(1 - self.hit_flash_timer / self.hit_flash_time, 0))
         self.hit_flash_timer += dt
         if self.hit_flash_timer >= self.hit_flash_time:
@@ -252,17 +258,44 @@ class GenericZombie(AbstractZombie):
         super().setup_sprite(group, level, row, move_to_row)
         self.path_finder = ZombiePathFinder(self)
 
-    def update(self, dt: float) -> None:
-        super().update(dt)
-        # TODO: 检查前进方向是否有植物
-        # TODO: 检查是否已经接触到植物
+    def detect_target(self, only_same_row=True) -> list[AbstractPlant]:
+        from game.character.plant import AbstractPlant
+        """
+        检查当前僵尸是否找到了攻击目标
+        本类中的逻辑为检测僵尸当前碰撞到的植物
+        子类可根据需要灵活重写
+        :param only_same_row: 是否仅保留与当前僵尸在同一行的植物, 默认为True
+        :return: 可用攻击目标
+        """
+        collides = pygame.sprite.spritecollide(self, self.group, False, collided=collide)
+        # 只保留植物
+        collide_plant: list[AbstractPlant] = []
+        for obj in collides:
+            if isinstance(obj, AbstractPlant):
+                # 只保留在僵尸前进方向上的植物
+                zp_vector = obj.world_pos - self.world_pos
+                dot_product = zp_vector.dot(self.direction)
+                if dot_product > 0:
+                    collide_plant.append(obj)
+        if only_same_row:
+            collide_plant = [cp for cp in collide_plant if cp.cell.row == self.row]
+        # 根据植物的 z 排序(涉及到南瓜头对其他植物的保护作用)
+        def sort_by_z(p1: AbstractPlant):
+            return p1.z
+        # 升序排序，列表末尾为优先承伤植物
+        collide_plant.sort(key=sort_by_z)
+        return collide_plant
+
+    def do_attack(self, plants: list[AbstractPlant]) -> None:
+        if len(plants) > 0:
+            plants[-1].hurt(self, )
+
+    def handle_state(self, dt: float):
+        """
+        处理僵尸状态
+        """
         # 获取动画状态
         controller = self.animation.get_current_controller()
-        # 更新方向向量
-        self.direction = self.path_finder.next_move_direction()
-        # 处理僵尸冰冻
-        if self.iced_remain_time > 0:
-            self.freeze()
         # 处理僵尸死亡事件
         if self.get_state() == 'dying' and isinstance(controller, OncePlayController) and controller.over:
             # 渐隐消失
@@ -275,6 +308,18 @@ class GenericZombie(AbstractZombie):
         # 处理僵尸移动
         if self.get_state() == 'walk':
             self.move(dt)
+
+    def update(self, dt: float) -> None:
+        super().update(dt)
+        # 检查是否有植物
+        plants_can_attack = self.detect_target()
+
+        # 更新方向向量
+        self.direction = self.path_finder.next_move_direction()
+        # 处理僵尸冰冻
+        if self.iced_remain_time > 0:
+            self.freeze()
+        self.handle_state(dt)
 
 
 class ConfigZombie(GenericZombie):
@@ -292,18 +337,6 @@ class ConfigZombie(GenericZombie):
             config.speed,
             zombie_offset=config.zombie_offset
         )
-
-    @classmethod
-    def from_id(cls, group: pygame.sprite.Group, config_id: str) -> ConfigZombie:
-        """
-        从配置文件创建对象
-        :param group: 精灵组
-        :param config_id: 配置文件id
-        :return:
-        """
-        config = CharacterConfigManager().get_config(config_id)
-        if isinstance(config, ZombieConfig): raise Exception("The specified config is not a zombie")
-        return cls(cast(config, ZombieConfig), group)
 
 
 @ZombieCreator.register_zombie('normal_zombie')

@@ -1,6 +1,6 @@
 import abc
 from abc import abstractmethod
-from typing import Union
+from typing import Union, Optional
 
 import pygame.sprite
 from pygame import Surface, Vector2
@@ -42,9 +42,9 @@ class GameSprite(pygame.sprite.Sprite, abc.ABC):
     @abstractmethod
     def setup_sprite(self, *args, **kwargs) -> None:
         """
-        该方法由子类重写，用于延迟挂载对象
+        该方法由子类重写，用于延迟挂载对象, 在GameSprite声明周期中仅会调用一次
         """
-        pass
+        self.mount(*args, **kwargs)
 
     def debug_draw(self, surface: Surface, camera_pos: Vector2) -> None:
         """
@@ -77,4 +77,74 @@ class GameSprite(pygame.sprite.Sprite, abc.ABC):
         if self.rect is not None:
             self.rect.topleft = topleft.copy()
 
+    def is_visible(self, override_rect: Optional[pygame.Rect]=None) -> bool:
+        """
+        该精灵是否可见
+        :param override_rect: 重载矩形，若提供了该参数，则会使用该参数进行检测，而非对象自带的矩形
+        :return: 若该精灵可被用户看见，则返回True，否则返回False
+        """
+        from base.cameragroup import CameraGroup
+        from game.game import Game
+        target_rect = override_rect or self.rect
+        if isinstance(self.group, CameraGroup): # 若当前group是摄像机，则检测是否在摄像机范围内
+            # 检测是否在摄像机范围内
+            camera_world_rect = pygame.Rect(self.group.world_pos, Game.screen_size)
+            if not target_rect: # 当前对象没有rect对象, 则检查其坐标是否在摄像机范围内
+                return camera_world_rect.collidepoint(self.world_pos)
+            else:
+                return camera_world_rect.colliderect(target_rect)
+        elif isinstance(self.group, pygame.sprite.Group):
+            screen_world_rect = pygame.Rect((0,0), Game.screen_size)
+            if not target_rect: # 当前对象没有rect对象, 则检查其坐标是否在摄像机范围内
+                return screen_world_rect.collidepoint(self.world_pos)
+            else:
+                return screen_world_rect.colliderect(target_rect)
+        else:
+            return False
 
+    def destroy(self):
+        """
+        在此处进行资源释放操作
+        """
+        self.unmount()
+
+    def unmount(self):
+        """
+        对象取消挂载, 在此处取消事件订阅
+        """
+        pass
+
+    def mount(self, *args, **kwargs):
+        """
+        对象挂载
+        """
+        pass
+
+
+    def __copy__(self):
+        cls = self.__class__
+        res = cls.__new__(cls)
+
+        # 基础字段复制
+        res.group = self.group  # 引用共享，不能直接 copy() 否则破坏精灵关系
+        # 初始化 Sprite 状态（需要重新注册到 group）
+        pygame.sprite.Sprite.__init__(res, res.group)
+
+        res.world_pos = self.world_pos.copy()
+        res.direction = self.direction.copy()
+        res.speed = self.speed
+        res.z = self.z
+
+        # 图像和矩形
+        res.image = self.image.copy()  # Surface 通常共享即可
+        res.rect = self.rect.copy() if self.rect else None
+
+        # 偏移量
+        res.image_offset = self.image_offset.copy()
+        res.rect_offset = self.rect_offset.copy()
+        res._old_rect_offset = self._old_rect_offset.copy()
+
+        # 显示状态
+        res.display = self.display
+
+        return res

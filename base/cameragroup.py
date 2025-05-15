@@ -1,6 +1,6 @@
 import abc
 from abc import abstractmethod
-from typing import Union
+from typing import Union, Callable
 
 import pygame.sprite
 from pygame import Surface, Vector2
@@ -18,6 +18,8 @@ class CameraGroup(pygame.sprite.Group):
         self.animator: Union[CameraAnimator, None] = None
         # 相机所在的世界坐标位置
         self.world_pos: Vector2 = Vector2(0,0)
+        # 跟随相机移动的精灵列表
+        self.followed_sprites: list[GameSprite] = []
 
     def update(self, dt: float):
         """
@@ -27,14 +29,12 @@ class CameraGroup(pygame.sprite.Group):
         if self.animator:
             self.animator.update(dt)
         sprite: GameSprite
-        # for sprite in self.sprites():
-        #     sprite.camera_offset = self.world_pos.copy()
 
     def move_to(self, pos: pygame.Vector2):
         self.world_pos = pos
 
-    def animate_to(self, offset: pygame.Vector2):
-        self.animator.animate_to(offset, 1000, EaseInOutQuad())
+    def animate_to(self, offset: pygame.Vector2, duration: float=1000):
+        self.animator.animate_to(offset, duration, EaseInOutQuad())
 
     def draw_debug(self, surface: Surface, sprite: GameSprite, bgsurf=None, special_flags=0) -> None:
         """
@@ -43,6 +43,16 @@ class CameraGroup(pygame.sprite.Group):
         sprite.debug_draw(surface, camera_pos=self.world_pos)
         pygame.draw.circle(surface, 'blue', sprite.world_pos - self.world_pos, 2)
         pygame.draw.circle(surface, 'lightblue', sprite.get_center_pos() - self.world_pos, 2)
+
+    def add_to_follow(self, sprite: GameSprite):
+        """
+        让传入的对象跟随相机移动
+        :param sprite: 需要跟随相机移动的精灵对象，注意，通过该方法传入的对象的world_pos会被相机时刻修改
+        """
+        if sprite not in self.sprites():
+            raise Exception('Target sprite is not in the camera group!')
+        self.followed_sprites.append(sprite)
+
 
     def draw(self, surface: Surface, bgsurf=None, special_flags=0):
         layers_sprites: dict[int, list[GameSprite]] = {}
@@ -60,10 +70,40 @@ class CameraGroup(pygame.sprite.Group):
             for sprite in layers_sprites[layer]:
                 if not sprite.display: continue
                 # surface.blit(sprite.image, sprite.world_pos - sprite.image_offset)
-                surface.blit(sprite.image, sprite.world_pos - sprite.image_offset - self.world_pos)
+                if sprite in self.followed_sprites:
+                    surface.blit(sprite.image, sprite.world_pos - sprite.image_offset)
+                else:
+                    surface.blit(sprite.image, sprite.world_pos - sprite.image_offset - self.world_pos)
                 from game.game import Game
                 if Game.debug_mode:
                     self.draw_debug(surface, sprite, bgsurf, special_flags)
+
+    def remove(
+        self, *sprites
+    ):
+        for sprite in sprites:
+            if isinstance(sprite, pygame.sprite.Sprite):
+                if self.has_internal(sprite):
+                    self.remove_internal(sprite)
+                    sprite.remove_internal(self)
+                # 从self.followed_sprites中删除
+                if sprite in self.followed_sprites:
+                    self.followed_sprites.remove(sprite)
+            else:
+                try:
+                    self.remove(*sprite)
+                except (TypeError, AttributeError):
+                    if hasattr(sprite, "_spritegroup"):
+                        for spr in sprite.sprites():
+                            if self.has_internal(spr):
+                                self.remove_internal(spr)
+                                spr.remove_internal(self)
+                    elif self.has_internal(sprite):
+                        self.remove_internal(sprite)
+                        sprite.remove_internal(self)
+
+
+
 
 class EasingFunction(abc.ABC):
     """

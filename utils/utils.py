@@ -3,6 +3,7 @@ from pygame import Surface, Vector2
 from pygame_gui import UIManager
 
 from base.resource_loader import ResourceLoader
+from base.sprite.game_sprite import GameSprite
 
 
 def fit_image_to_size(image_surf: Surface, target_width, target_height):
@@ -41,3 +42,18 @@ def get_mouse_world_pos(camera_pos: Vector2) -> Vector2:
     :return: 鼠标世界坐标位置
     """
     return Vector2(pygame.mouse.get_pos()) + camera_pos
+
+def transform_coor_sys(coor: Vector2, origin_pos: Vector2) -> Vector2:
+    """
+    将指定坐标位置变化到指定原点所在坐标系的坐标
+    :return: 变换后的坐标
+    """
+    return Vector2(coor.x - origin_pos.x, coor.y - origin_pos.y)
+
+def collide(sp1: GameSprite, sp2: GameSprite):
+    """
+    对两个GameSprite进行碰撞检测
+    若传入的任何一个对象没有矩形属性则返回False
+    """
+    if not sp2.rect or not sp1.rect: return False
+    return pygame.sprite.collide_rect(sp1, sp2)

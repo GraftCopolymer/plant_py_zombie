@@ -189,6 +189,10 @@ class PlantGrid:
             for cell in _:
                 cell.cancel_highlight()
 
+    def unmount(self):
+        EventBus().unsubscribe(MouseMotionEvent, self._on_mouse_move)
+        EventBus().unsubscribe(ClickEvent, self._on_mouse_click)
+
 
 class GridCell(abc.ABC):
     """

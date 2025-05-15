@@ -6,6 +6,7 @@ from pygame_gui.elements import UIButton
 from base.game_event import ButtonClickEvent, EventBus
 from base.scene import AbstractScene, SceneManager
 from game.level.level_scene import LevelScene
+from game.ui.plant_select_container import PlantSelectContainer
 from utils.utils import create_ui_manager_with_theme
 
 
@@ -60,13 +61,14 @@ class MainMenuScene(AbstractScene):
         )
         # self.plant_select_container.setup()
 
-    def detach_scene(self):
-        EventBus().unsubscribe(ButtonClickEvent, self._on_exit_game)
-        EventBus().unsubscribe(ButtonClickEvent, self._on_start_game)
-
-    def setup_scene(self, manager: SceneManager) -> None:
+    def mount(self):
         EventBus().subscribe(ButtonClickEvent, self._on_exit_game)
         EventBus().subscribe(ButtonClickEvent, self._on_start_game)
+
+    def unmount(self):
+        EventBus().unsubscribe(ButtonClickEvent, self._on_exit_game)
+        EventBus().unsubscribe(ButtonClickEvent, self._on_start_game)
+        print(f'页面MainMenuScene取消订阅')
 
     def _on_exit_game(self, event: ButtonClickEvent):
         if "#exit_game_button" in event.ui_element.object_ids:

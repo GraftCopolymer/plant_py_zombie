@@ -43,9 +43,9 @@ class SceneManager:
         self.top().process_ui_event(event)
 
     def push_scene(self, scene: AbstractScene):
-        # detach掉当前场景
+        # unmount掉当前场景
         if not self.is_empty():
-            self.top().detach_scene()
+            self.top().unmount()
         self.scenes.append(scene)
         scene.setup_scene(self)
         self.refresh_ui()
@@ -140,18 +140,30 @@ class AbstractScene(abc.ABC):
 
     def setup_scene(self, manager: SceneManager) -> None:
         """
-        场景需要显示时调用
+        场景初始化时调用
         """
         self.manager = manager
+        self.mount()
 
     def process_ui_event(self, event) -> None:
         if self.ui_manager is not None:
             self.ui_manager.process_events(event)
 
-    @abstractmethod
     def detach_scene(self):
         """
+        场景销毁时调用
+        """
+        self.unmount()
+
+    def unmount(self):
+        """
         从该场景切走时需要执行的清理工作，例如取消订阅事件等
+        """
+        pass
+
+    def mount(self):
+        """
+        切到场景显示时调用
         """
         pass
 

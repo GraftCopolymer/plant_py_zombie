@@ -50,9 +50,11 @@ class Game:
     running = False
     delta: float = 0
     screen_size: tuple[int, int] = (900, 600)
+    # 子弹有效范围，超出该范围将删除子弹
+    bullets_exist_rect: pygame.Rect = pygame.Rect(-100, -100, screen_size[0] + 200, screen_size[1] + 200)
     clock: Clock = None
     screen: Surface = None
-    debug_mode: bool = True
+    debug_mode: bool = False
 
     @staticmethod
     def end():
@@ -80,9 +82,8 @@ class Game:
         ResourceLoader().load_theme_to_manager(Game.theme_path, Game.ui_manager)
 
     @staticmethod
-    def in_screen(sprite: GameSprite) -> bool:
-        screen_rect = pygame.Rect((0,0),Game.screen_size)
-        return screen_rect.colliderect(sprite.rect)
+    def bullet_in_screen(sprite: GameSprite) -> bool:
+        return Game.bullets_exist_rect.colliderect(sprite.rect)
 
     @staticmethod
     def run():
@@ -91,18 +92,14 @@ class Game:
         Game.running = True
 
         scene_manager = SceneManager()
-        # 测试游戏场景和僵尸
-        # test_level = LevelScene('./resources/level/first_day/first_day.tmx', "first_day")
-        # scene_manager.push_scene(test_level)
-        # test_level.camera.animator = CameraAnimator(test_level.camera, 200, EaseInOutQuad())
 
         camera_pos = pygame.Vector2(0,0)
 
-        EventBus().subscribe_ui(ButtonClickEvent, on_start_plant)
-        EventBus().subscribe_ui(ButtonClickEvent, on_gen_zombie)
-        EventBus().subscribe_ui(ButtonClickEvent, on_start_plant_machine_gun)
-        EventBus().subscribe_ui(ButtonClickEvent, on_start_plant_iced_pea_shooter)
-        EventBus().subscribe_ui(ButtonClickEvent, on_next_level)
+        # EventBus().subscribe_ui(ButtonClickEvent, on_start_plant)
+        # EventBus().subscribe_ui(ButtonClickEvent, on_gen_zombie)
+        # EventBus().subscribe_ui(ButtonClickEvent, on_start_plant_machine_gun)
+        # EventBus().subscribe_ui(ButtonClickEvent, on_start_plant_iced_pea_shooter)
+        # EventBus().subscribe_ui(ButtonClickEvent, on_next_level)
 
         from game.ui.main_menu_scene import MainMenuScene
         main_menu = MainMenuScene()
@@ -110,7 +107,6 @@ class Game:
 
         while Game.running:
             EventBus().process_event()
-            print(len(SceneManager().scenes))
 
             pygame.display.flip()
             scene_manager.update(Game.delta)

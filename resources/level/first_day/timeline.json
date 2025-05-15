@@ -5,7 +5,7 @@
   "waves": [
     {
       "time": 0,
-      "spawn_interval": 0,
+      "spawn_interval": 8,
       "zombies": [
         {
           "type": "normal_zombie",
@@ -19,7 +19,7 @@
     },
     {
       "time": 30,
-      "spawn_interval": 0,
+      "spawn_interval": 7,
       "zombies": [
         {
           "type": "normal_zombie",
@@ -33,11 +33,15 @@
     },
     {
       "time": 60,
-      "spawn_interval": 5,
+      "spawn_interval": 10,
       "zombies": [
         {
           "type": "buckethead_zombie",
-          "frequency": 2
+          "frequency": 1
+        },
+        {
+          "type": "normal_zombie",
+          "frequency": 8
         }
       ]
     },
