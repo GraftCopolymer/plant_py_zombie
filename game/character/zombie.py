@@ -381,6 +381,8 @@ class BucketheadZombie(ConfigZombie):
     def __init__(self, group: Union[pygame.sprite.Group, list]):
         super().__init__(CharacterConfigManager().get_zombie_config('buckethead_zombie'),
                          BucketheadZombieStateMachine(), group)
+        self.damage = 20
+        self.attack_interval = 400
 
     def update(self, dt: float):
         super().update(dt)
