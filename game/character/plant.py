@@ -70,6 +70,8 @@ class AbstractPlant(GameSprite, abc.ABC):
         self.image = self.animation.get_current_image()
         if self.animator is not None:
             self.animator.update(dt)
+        if self.hurt_state:
+            self.hit_flash(dt)
 
 
     def setup_sprite(self, group: pygame.sprite.Group, cell: AbstractPlantCell, level: 'LevelScene'):

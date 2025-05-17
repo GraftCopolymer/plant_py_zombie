@@ -199,6 +199,10 @@ class GenericZombie(AbstractZombie):
         self.iced_speed_factor = 1
         # 僵尸伤害, 父类默认为0, 子类修改此变量以实现自己的伤害
         self.damage = 0
+        # 僵尸攻击间隔, 决定了多久调用一次植物的hurt方法, 子类实现, 单位ms
+        self.attack_interval = 0
+        # 攻击间隔计时器
+        self.attack_timer = 0
 
     def move(self, dt: float) -> None:
         super().move(dt)
@@ -261,7 +265,7 @@ class GenericZombie(AbstractZombie):
         super().setup_sprite(group, level, row, move_to_row)
         self.path_finder = ZombiePathFinder(self)
 
-    def detect_target(self, only_same_row=True) -> list[AbstractPlant]:
+    def detect_targets(self, only_same_row=True) -> list[AbstractPlant]:
         from game.character.plant import AbstractPlant
         """
         检查当前僵尸是否找到了攻击目标
@@ -308,14 +312,16 @@ class GenericZombie(AbstractZombie):
         if not self.is_alive() and self.get_state() != 'dying':
             self.dying()
         if self.get_state() == 'attack':
+            self.attack_timer += dt
             # 如果附近没有攻击对象，则退出攻击状态
-            attack_target = self.detect_target()
-            if len(attack_target) == 0:
+            attack_targets = self.detect_targets()
+            if len(attack_targets) == 0:
                 self.state_machine.transition_to("walk")
-            else:
+            elif self.attack_timer >= self.attack_interval:
                 # 有可攻击对象, 选择图层在最上面的植物进行攻击(此处无需对attack_target额外排序, detect_target方法内部已经排好了序)
-                target = attack_target[-1]
+                target = attack_targets[-1]
                 target.hurt(self, self.damage)
+                self.attack_timer = 0
         # 处理僵尸受击
         if self.hurt_state:
             self.hit_flash(dt)
@@ -326,8 +332,8 @@ class GenericZombie(AbstractZombie):
     def update(self, dt: float) -> None:
         super().update(dt)
         # 检查是否有植物
-        plants_can_attack = self.detect_target()
-        if self.get_state() != "attack" and len(self.detect_target()) > 0:
+        plants_can_attack = self.detect_targets()
+        if self.get_state() != "attack" and len(self.detect_targets()) > 0:
             self.attack()
         # 更新方向向量
         self.direction = self.path_finder.next_move_direction()
@@ -362,6 +368,8 @@ class NormalZombie(ConfigZombie):
 
     def __init__(self, group: Union[pygame.sprite.Group, list]):
         super().__init__(CharacterConfigManager().get_zombie_config('normal_zombie'), ZombieStateMachine(), group)
+        self.damage = 20
+        self.attack_interval = 400
 
 
 @ZombieCreator.register_zombie('buckethead_zombie')
