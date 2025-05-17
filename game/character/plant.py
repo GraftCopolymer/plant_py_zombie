@@ -1,10 +1,11 @@
 import abc
 import math
+import random
 from abc import abstractmethod
 from typing import Union, TYPE_CHECKING
 
 import pygame.sprite
-from pygame import Surface
+from pygame import Surface, Vector2
 
 from base.animation import StatefulAnimation
 from base.config import LAYERS
@@ -12,7 +13,7 @@ from base.game_grid import AbstractPlantCell, GrassPlantCell, WaterPlantCell
 from base.sprite.game_sprite import GameSprite
 from game.character.bullets import Bullet
 from game.character.character_config import CharacterConfigManager
-from game.character.plant_ability import Shooter
+from game.character.plant_ability import Shooter, TimingAction
 from game.level.state_machine import StateMachine, State
 from game.level.plant_creator import PlantCreator
 
@@ -300,6 +301,49 @@ class IcedPeaShooter(GrassShooterPlant):
             self.shoot()
             # 重置发射冷却
             self.shoot_timer = 0
+
+@PlantCreator.register_plant('sun_flower')
+class SunFlower(GrassPlant, TimingAction):
+    # 种植需消耗的阳光, 所有对象共享
+    sun_cost = 50
+    # 种植冷却, 所有对象共享, 单位ms
+    plant_cold_down = 10000
+    # 最小阳光生成间隔
+    min_sun_produce_interval = 4000
+    # 最大阳光生成间隔
+    max_sun_produce_interval = 7000
+    def __init__(self):
+        super().__init__(max_health=150)
+        # 产生阳光冷却计时器, 单位ms
+        self.produce_timer = 0
+        self.current_action_interval = self.getNextActionInterval()
+
+    def load_animation(self) -> StatefulAnimation:
+        config = CharacterConfigManager().get_animation_config("sun_flower_animation")
+        animation = StatefulAnimation(config.get_random_animation_group(), config.init_state)
+        return animation
+
+    def getNextActionInterval(self) -> int:
+        return random.randint(SunFlower.min_sun_produce_interval, SunFlower.max_sun_produce_interval)
+
+    def doAction(self) -> None:
+        # 在本植物坐标处生成阳光
+        from game.level.sun import Sun
+        spawn_pos = self.world_pos.copy()
+        # 在距离生成处的位置随机生成一个任意方向的变量作为阳光的目的地
+        des_direct = Vector2(random.uniform(-1, 1), random.uniform(-1,1)).normalize()
+        des_distance = 30
+        sun = Sun(self.level.camera, spawn_pos, spawn_pos + des_direct * des_distance)
+        sun.setup_sprite(self.level, revise=False)
+
+    def update(self, dt: float) -> None:
+        super().update(dt)
+        self.produce_timer += dt
+        if self.produce_timer >= self.current_action_interval:
+            self.produce_timer = 0
+            self.current_action_interval = self.getNextActionInterval()
+            # 生成阳光
+            self.doAction()
 
 
 class PlantAnimator(abc.ABC):

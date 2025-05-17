@@ -9,8 +9,7 @@ from base.config import LAYERS
 from base.sprite.game_sprite import GameSprite
 from game.character import Position
 from game.level.level_scene import LevelScene
-from utils.utils import transform_coor_sys
-
+from base.game_event import EventBus, SunCollectEvent
 if TYPE_CHECKING:
     from base.game_event import ClickEvent
 
@@ -33,16 +32,22 @@ class Sun(GameSprite):
         self.speed = 10
         # 是否处于回收状态
         self.collecting = False
+        # 该阳光的数值(一般来说都是25)
+        self.value = 25
 
-    def setup_sprite(self, level: 'LevelScene') -> None:
+    def setup_sprite(self, level: 'LevelScene', revise=True) -> None:
+        """
+        :param revise: 是否使用相机坐标修正阳光坐标，多用于自然生成的阳光
+        """
         super().setup_sprite()
         if level.camera is not None:
             self.group = level.camera
             self.level = level
             # 根据相机坐标修正阳光坐标
-            self.set_position(self.world_pos + level.camera.world_pos)
-            # 修正目的地坐标
-            self.sun_destination += level.camera.world_pos
+            if revise:
+                self.set_position(self.world_pos + level.camera.world_pos)
+                # 修正目的地坐标
+                self.sun_destination += level.camera.world_pos
             # 将自身添加到level中
             self.level.add_sun(self)
 
@@ -64,7 +69,9 @@ class Sun(GameSprite):
         if self.collecting and self._arrive_des():
             # 销毁当前阳光对象
             self.level.remove_sun(self)
-            self.kill()
+            # 发布阳光收集事件
+            EventBus().publish(SunCollectEvent(self))
+            self.destroy()
 
         # 若阳光未到达目的地，则让其向目的地方向运动
         if not self._arrive_des():

@@ -29,3 +29,21 @@ class Boomer(abc.ABC):
     def get_boom_damage(self) -> float: pass
     @abstractmethod
     def get_range(self) -> float: pass
+
+class TimingAction(abc.ABC):
+    """
+    每隔一段时间做出一定操作的植物
+    """
+    @abstractmethod
+    def getNextActionInterval(self) -> int:
+        """
+        下一次操作的时间间隔, 单位ms
+        """
+        pass
+
+    @abstractmethod
+    def doAction(self) -> None:
+        """
+        执行操作
+        """
+        pass

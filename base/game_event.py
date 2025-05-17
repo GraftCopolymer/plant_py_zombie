@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from base.game_grid import AbstractPlantCell
     from game.character.zombie import AbstractZombie
     from game.ui.plant_card import PlantCard
+    from game.level.sun import Sun
 
 
 T = TypeVar("T", bound="Event")
@@ -242,3 +243,8 @@ class PlantCardEndColdDown(Event):
     def __init__(self, card: 'PlantCard'):
         super().__init__()
         self.plant_card = card
+
+class SunCollectEvent(Event):
+    def __init__(self, sun: 'Sun'):
+        super().__init__()
+        self.sun = sun

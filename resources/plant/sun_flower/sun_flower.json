@@ -1,0 +1,12 @@
+{
+  "id": "sun_flower_animation",
+  "animations": {
+    "idle": [
+      {
+        "type": "sprite_sheet",
+        "frames": "./sun_flower.png",
+        "frames_count": 8
+      }
+    ]
+  }
+}

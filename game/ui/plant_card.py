@@ -38,17 +38,15 @@ class PlantCard(GameSprite):
         self.cold_down_mask.fill(PlantCard.cold_mask_color)
 
     def update(self, dt: float) -> None:
+        self.image = self._origin_image.copy()
         if self.disabled:
-            self.image = self._origin_image.copy()
             self.image.blit(self.disabled_mask, (0,0), special_flags=pygame.BLEND_RGB_SUB)
-            if self.cold_down:
-                self.update_cold_down_mask(dt)
-                self.image.blit(self.cold_down_mask, (0,0), special_flags=pygame.BLEND_RGB_SUB)
-                self.cold_down_timer -= dt
-                if self.cold_down_timer <= 0:
-                    self.cold_down_end()
-        else:
-            self.image = self._origin_image.copy()
+        if self.cold_down:
+            self.update_cold_down_mask(dt)
+            self.image.blit(self.cold_down_mask, (0,0), special_flags=pygame.BLEND_RGB_SUB)
+            self.cold_down_timer -= dt
+            if self.cold_down_timer <= 0:
+                self.cold_down_end()
 
     def update_cold_down_mask(self, dt: float):
         """

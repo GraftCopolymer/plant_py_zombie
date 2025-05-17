@@ -13,9 +13,9 @@ from base.listenable import ListenableValue
 from utils.utils import transform_coor_sys
 
 if TYPE_CHECKING:
-    from base.game_event import SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, PlantCardEndColdDown
+    from base.game_event import SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, \
+        PlantCardEndColdDown
 from game.ui.plant_card import PlantCard
-
 
 
 class InGamePlantSelector(UIElement):
@@ -76,24 +76,28 @@ class InGamePlantSelector(UIElement):
         self.can_place_plant = False
 
     def setup(self):
-        from base.game_event import EventBus, SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, PlantCardEndColdDown
+        from base.game_event import EventBus, SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, \
+            PlantCardEndColdDown, SunCollectEvent
         # 订阅从植物选择器选择植物卡片的事件
         EventBus().subscribe(SelectPlantCardToBankEvent, self._on_add_plant_card_from_selector)
         EventBus().subscribe(ClickEvent, self._on_click)
         EventBus().subscribe(StartFightEvent, self._on_level_start)
         EventBus().subscribe(StopPlantEvent, self._on_stop_planting)
         EventBus().subscribe(PlantCardEndColdDown, self._on_plant_card_end_cold_down)
+        # 阳光收集事件
+        EventBus().subscribe(SunCollectEvent, self._on_collect_sun)
 
     def unmount(self):
         self.ui_manager.clear_and_reset()
         from base.game_event import EventBus, SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, \
-            PlantCardEndColdDown
+            PlantCardEndColdDown, SunCollectEvent
         # 取消事件订阅
         EventBus().unsubscribe(SelectPlantCardToBankEvent, self._on_add_plant_card_from_selector)
         EventBus().unsubscribe(ClickEvent, self._on_click)
         EventBus().unsubscribe(StartFightEvent, self._on_level_start)
         EventBus().unsubscribe(StopPlantEvent, self._on_stop_planting)
         EventBus().unsubscribe(PlantCardEndColdDown, self._on_plant_card_end_cold_down)
+        EventBus().unsubscribe(SunCollectEvent, self._on_collect_sun)
         print(f'组件InGamePlantSelector取消订阅')
 
     def layout(self):
@@ -169,6 +173,8 @@ class InGamePlantSelector(UIElement):
         for card in self.cards:
             if card.plant_cls.sun_cost > self.sun_value.value:
                 card.disable()
+            else:
+                card.enable()
 
     def _on_add_plant_card_from_selector(self, event: 'SelectPlantCardToBankEvent'):
         card = event.plant_card
@@ -194,8 +200,8 @@ class InGamePlantSelector(UIElement):
                     EventBus().publish(RemovePlantCardFromBankEvent(copy.copy(card)))
             else:
                 from game.level.plant_creator import PlantCreator
-                # 检查阳光是否够用
-                if card.plant_cls.sun_cost > self.sun_value.value:
+                # 检查阳光是否够用以及是否处于冷却状态和禁用状态
+                if card.plant_cls.sun_cost > self.sun_value.value or card.cold_down or card.disabled:
                     return
                 plant = PlantCreator.create_plant(card.plant_name)
                 EventBus().publish(StartPlantEvent(plant))
@@ -205,18 +211,21 @@ class InGamePlantSelector(UIElement):
         self.can_place_plant = True
 
     def _on_stop_planting(self, event: 'StopPlantEvent'):
-       plant = event.plant
-       if plant is not None:
-           # 扣除阳光
-           self.sun_value.value = self.sun_value.value - plant.sun_cost
-           # 禁用卡片并开始冷却
-           for c in self.cards:
-               if c.plant_cls == plant.__class__:
-                   c.disable()
-                   c.cold_down_start()
-                   break
+        plant = event.plant
+        if plant is not None:
+            # 扣除阳光
+            self.sun_value.value = self.sun_value.value - plant.sun_cost
+            # 禁用卡片并开始冷却
+            for c in self.cards:
+                if c.plant_cls == plant.__class__:
+                    c.disable()
+                    c.cold_down_start()
+                    break
 
     def _on_plant_card_end_cold_down(self, event: 'PlantCardEndColdDown'):
         card = event.plant_card
         if self.sun_value.value >= card.plant_cls.sun_cost:
             card.enable()
+
+    def _on_collect_sun(self, event: 'SunCollectEvent'):
+        self.sun_value.value = self.sun_value.value + event.sun.value

@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from game.level.level_scene import LevelScene
     from game.character.plant import AbstractPlant
 
+
 class AbstractZombieStateMachine(StateMachine, abc.ABC):
     def __init__(self):
         super().__init__()
@@ -196,6 +197,8 @@ class GenericZombie(AbstractZombie):
         self.path_finder: Union[ZombiePathFinder, None] = None
         # 冰冻速度乘因子，默认为1
         self.iced_speed_factor = 1
+        # 僵尸伤害, 父类默认为0, 子类修改此变量以实现自己的伤害
+        self.damage = 0
 
     def move(self, dt: float) -> None:
         super().move(dt)
@@ -238,7 +241,7 @@ class GenericZombie(AbstractZombie):
         blue_mask = Surface(self.image.get_size())
         blue_mask.fill((168, 0, 0, 0))
         # 通过减去红色来实现深蓝色色调
-        self.image.blit(blue_mask, (0,0), special_flags=pygame.BLEND_RGB_SUB)
+        self.image.blit(blue_mask, (0, 0), special_flags=pygame.BLEND_RGB_SUB)
 
     def hit_flash(self, dt: float):
         """
@@ -279,9 +282,11 @@ class GenericZombie(AbstractZombie):
                     collide_plant.append(obj)
         if only_same_row:
             collide_plant = [cp for cp in collide_plant if cp.cell.row == self.row]
+
         # 根据植物的 z 排序(涉及到南瓜头对其他植物的保护作用)
         def sort_by_z(p1: AbstractPlant):
             return p1.z
+
         # 升序排序，列表末尾为优先承伤植物
         collide_plant.sort(key=sort_by_z)
         return collide_plant
@@ -302,6 +307,15 @@ class GenericZombie(AbstractZombie):
             self.fading(dt)
         if not self.is_alive() and self.get_state() != 'dying':
             self.dying()
+        if self.get_state() == 'attack':
+            # 如果附近没有攻击对象，则退出攻击状态
+            attack_target = self.detect_target()
+            if len(attack_target) == 0:
+                self.state_machine.transition_to("walk")
+            else:
+                # 有可攻击对象, 选择图层在最上面的植物进行攻击(此处无需对attack_target额外排序, detect_target方法内部已经排好了序)
+                target = attack_target[-1]
+                target.hurt(self, self.damage)
         # 处理僵尸受击
         if self.hurt_state:
             self.hit_flash(dt)
@@ -313,7 +327,8 @@ class GenericZombie(AbstractZombie):
         super().update(dt)
         # 检查是否有植物
         plants_can_attack = self.detect_target()
-
+        if self.get_state() != "attack" and len(self.detect_target()) > 0:
+            self.attack()
         # 更新方向向量
         self.direction = self.path_finder.next_move_direction()
         # 处理僵尸冰冻
@@ -344,6 +359,7 @@ class NormalZombie(ConfigZombie):
     """
     最普通的僵尸
     """
+
     def __init__(self, group: Union[pygame.sprite.Group, list]):
         super().__init__(CharacterConfigManager().get_zombie_config('normal_zombie'), ZombieStateMachine(), group)
 
@@ -353,6 +369,7 @@ class BucketheadZombie(ConfigZombie):
     """
     铁桶僵尸
     """
+
     def __init__(self, group: Union[pygame.sprite.Group, list]):
         super().__init__(CharacterConfigManager().get_zombie_config('buckethead_zombie'),
                          BucketheadZombieStateMachine(), group)
