@@ -11,8 +11,17 @@
     "attack": [
       {
         "type": "gif",
+        "frames": "./ZombieAttack.gif",
+        "interval": 100,
+        "offset": [65, 20]
+      }
+    ],
+     "attack_with_bucket": [
+      {
+        "type": "gif",
         "frames": "./BucketheadZombieAttack.gif",
-        "interval": 100
+        "interval": 100,
+        "offset": [65, 20]
       }
     ],
     "walk": [

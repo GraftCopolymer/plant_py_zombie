@@ -49,9 +49,13 @@ class BucketheadZombieStateMachine(ZombieStateMachine):
         self.walk_with_bucket = State('walk_with_bucket')
         # 顶着破头盔走
         self.walk_with_broken_bucket = State('walk_with_broken_bucket')
+        # 顶着头盔攻击
+        self.attack_with_bucket = State('attack_with_bucket')
         # 注意，无头盔行走使用状态walk(父类中定义)
-        self.add_state(self.walk_with_bucket, {'walk', 'walk_with_broken_bucket', 'attack', 'dying'})
+        self.add_state(self.walk_with_bucket, {'walk', 'walk_with_broken_bucket', 'attack', 'attack_with_bucket', 'dying'})
         self.add_state(self.walk_with_broken_bucket, {'walk', 'attack', 'dying'})
+        self.add_state(self.attack_with_bucket, {'attack', 'dying', 'walk', 'walk_with_bucket'})
+        self.add_transition_of(self.attack, {'walk_with_bucket', 'walk_with_broken_bucket', 'attack_with_bucket'})
         self.set_initial_state('walk_with_bucket')
 
 
@@ -305,18 +309,22 @@ class GenericZombie(AbstractZombie):
         """
         # 获取动画状态
         controller = self.animation.get_current_controller()
+        # 检查是否有植物
+        plants_can_attack = self.detect_targets()
+        if self.state_machine.can_transition_to('attack') and len(plants_can_attack) > 0:
+            self.attack()
         # 处理僵尸死亡事件
         if self.get_state() == 'dying' and isinstance(controller, OncePlayController) and controller.over:
             # 渐隐消失
             self.fading(dt)
-        if not self.is_alive() and self.get_state() != 'dying':
+        if not self.is_alive() and self.state_machine.can_transition_to('dying'):
             self.dying()
         if self.get_state() == 'attack':
             self.attack_timer += dt
             # 如果附近没有攻击对象，则退出攻击状态
             attack_targets = self.detect_targets()
             if len(attack_targets) == 0:
-                self.state_machine.transition_to("walk")
+                self.walk()
             elif self.attack_timer >= self.attack_interval:
                 # 有可攻击对象, 选择图层在最上面的植物进行攻击(此处无需对attack_target额外排序, detect_target方法内部已经排好了序)
                 target = attack_targets[-1]
@@ -331,10 +339,6 @@ class GenericZombie(AbstractZombie):
 
     def update(self, dt: float) -> None:
         super().update(dt)
-        # 检查是否有植物
-        plants_can_attack = self.detect_targets()
-        if self.get_state() != "attack" and len(self.detect_targets()) > 0:
-            self.attack()
         # 更新方向向量
         self.direction = self.path_finder.next_move_direction()
         # 处理僵尸冰冻
@@ -371,7 +375,6 @@ class NormalZombie(ConfigZombie):
         self.damage = 20
         self.attack_interval = 400
 
-
 @ZombieCreator.register_zombie('buckethead_zombie')
 class BucketheadZombie(ConfigZombie):
     """
@@ -391,6 +394,45 @@ class BucketheadZombie(ConfigZombie):
         # walk状态在父类中已处理，无需重复处理
         if self.get_state() in ['walk_with_bucket', 'walk_with_broken_bucket']:
             self.move(dt)
+
+    def walk(self):
+        if self.health <= 270:
+            super().walk()
+        else:
+            self.walk_with_bucket()
+
+    def attack(self):
+        if self.health <= 270:
+            super().attack()
+        else:
+            self.attack_with_bucket()
+
+    def handle_state(self, dt: float):
+        # 单独处理 attack_with_bucket状态
+        if self.get_state() == 'attack_with_bucket':
+            if self.health <= 270 and self.state_machine.can_transition_to('attack'):
+                self.attack()
+                return
+            self.attack_timer += dt
+            # 如果附近没有攻击对象，则退出攻击状态
+            attack_targets = self.detect_targets()
+            if len(attack_targets) == 0:
+                self.walk()
+            elif self.attack_timer >= self.attack_interval:
+                # 有可攻击对象, 选择图层在最上面的植物进行攻击(此处无需对attack_target额外排序, detect_target方法内部已经排好了序)
+                target = attack_targets[-1]
+                target.hurt(self, self.damage)
+                self.attack_timer = 0
+        else:
+            super().handle_state(dt)
+
+    def walk_with_bucket(self):
+        self.state_machine.transition_to("walk_with_bucket")
+        self.animation.change_state(self.state_machine.get_state())
+
+    def attack_with_bucket(self):
+        self.state_machine.transition_to("attack_with_bucket")
+        self.animation.change_state(self.state_machine.get_state())
 
 
 class ZombiePathFinder:
