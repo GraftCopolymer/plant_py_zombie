@@ -346,6 +346,7 @@ class SunFlower(GrassPlant, TimingAction):
         des_direct = Vector2(random.uniform(-1, 1), random.uniform(-1,1)).normalize()
         des_distance = 30
         sun = Sun(self.level.camera, spawn_pos, spawn_pos + des_direct * des_distance)
+        sun.value = 25
         sun.setup_sprite(self.level, revise=False)
 
     def update(self, dt: float) -> None:

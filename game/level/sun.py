@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 class Sun(GameSprite):
     """
+    阳光对象
     阳光的world_pos实际为其在屏幕范围内的坐标(但不是屏幕坐标系)
     """
     # 阳光收集点的位置
@@ -66,6 +67,15 @@ class Sun(GameSprite):
         # 更新阳光动画
         self.animation.update(dt)
         self.image = self.animation.get_image()
+        # 根据阳光数值对阳光贴图进行缩放
+        image_size = list(self.image.size)
+        image_size[0] *= self.value / 25 # 以标准值25进行缩放
+        image_size[1] *= self.value / 25
+        self.image = pygame.transform.scale(self.image, image_size)
+        # 给贴图一些透明度
+        self.image.set_alpha(210)
+        # 更新image矩形
+        self.rect = self.image.get_rect()
         if self.collecting and self._arrive_des():
             # 销毁当前阳光对象
             self.level.remove_sun(self)
