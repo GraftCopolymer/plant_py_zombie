@@ -370,85 +370,13 @@ class LevelScene(AbstractScene):
         return self.plant_state
 
     def setup_ui(self, *args, **kwargs) -> None:
-        plant_button_rect = pygame.Rect(0, 0, 100, 60)
-        plant_button_rect.topright = (0, 0)
-        pygame_gui.elements.UIButton(
-            relative_rect=plant_button_rect,
-            text="豌豆射手",
-            manager=self.ui_manager,
-            object_id="#start_plant_button",
-            anchors={
-                'right': 'right',
-                'top': 'top'
-            }
-        )
-        machine_gun_button_rect = pygame.Rect(0, 0, 100, 60)
-        machine_gun_button_rect.topright = (-200, 0)
-        pygame_gui.elements.UIButton(
-            relative_rect=machine_gun_button_rect,
-            text="机枪射手",
-            manager=self.ui_manager,
-            object_id="#start_plant_machine_gun_button",
-            anchors={
-                'right': 'right',
-                'top': 'top'
-            }
-        )
-        zombie_button_rect = pygame.Rect(0, 0, 100, 60)
-        zombie_button_rect.topright = (-100, 0)
-        pygame_gui.elements.UIButton(
-            relative_rect=zombie_button_rect,
-            text="生成僵尸",
-            manager=self.ui_manager,
-            object_id="#zombie_gen_button",
-            anchors={
-                'right': 'right',
-                'top': 'top'
-            }
-        )
-        change_level_button_rect = pygame.Rect(0, 0, 100, 60)
-        change_level_button_rect.topright = (-300, 0)
-        pygame_gui.elements.UIButton(
-            relative_rect=change_level_button_rect,
-            text='下一关',
-            manager=self.ui_manager,
-            object_id="#next_level_button",
-            anchors={
-                'right': 'right',
-                'top': 'top'
-            }
-        )
         pop_level_button_rect = pygame.Rect(0, 0, 100, 60)
-        pop_level_button_rect.topright = (-400, 0)
+        pop_level_button_rect.topright = (0, 0)
         pygame_gui.elements.UIButton(
             relative_rect=pop_level_button_rect,
             text='返回',
             manager=self.ui_manager,
             object_id="#pop_level_button",
-            anchors={
-                'right': 'right',
-                'top': 'top'
-            }
-        )
-        check_zombie_rect = pygame.Rect(0, 0, 100, 60)
-        check_zombie_rect.topright = (-500, 0)
-        pygame_gui.elements.UIButton(
-            relative_rect=check_zombie_rect,
-            text='查看僵尸',
-            manager=self.ui_manager,
-            object_id="#check_zombie_button",
-            anchors={
-                'right': 'right',
-                'top': 'top'
-            }
-        )
-        iced_pea_shooter_rect = pygame.Rect(0, 0, 100, 60)
-        iced_pea_shooter_rect.topright = (-600, 0)
-        pygame_gui.elements.UIButton(
-            relative_rect=iced_pea_shooter_rect,
-            text='寒冰射手',
-            manager=self.ui_manager,
-            object_id="#start_plant_iced_pea_shooter_button",
             anchors={
                 'right': 'right',
                 'top': 'top'
@@ -468,8 +396,6 @@ class LevelScene(AbstractScene):
         EventBus().subscribe(StartPlantEvent, self._on_plant)
         EventBus().subscribe(MouseMotionEvent, self._on_mouse_move)
         EventBus().subscribe(StopPlantEvent, self._on_stop_planting)
-        EventBus().subscribe(WillGenZombieEvent, self._on_gen_zombie)
-        EventBus().subscribe(ButtonClickEvent, self._on_check_zombie)
         EventBus().subscribe(ButtonClickEvent, self._on_pop_level)
         EventBus().subscribe(ButtonClickEvent, self._on_start_fight)
 
@@ -477,8 +403,6 @@ class LevelScene(AbstractScene):
         EventBus().unsubscribe(StartPlantEvent, self._on_plant)
         EventBus().unsubscribe(MouseMotionEvent, self._on_mouse_move)
         EventBus().unsubscribe(StopPlantEvent, self._on_stop_planting)
-        EventBus().unsubscribe(WillGenZombieEvent, self._on_gen_zombie)
-        EventBus().unsubscribe(ButtonClickEvent, self._on_check_zombie)
         EventBus().unsubscribe(ButtonClickEvent, self._on_pop_level)
         EventBus().unsubscribe(ButtonClickEvent, self._on_start_fight)
         self.plant_select_container.unmount()
@@ -516,13 +440,6 @@ class LevelScene(AbstractScene):
     def _on_stop_planting(self, event: StopPlantEvent):
         self.remove(self.plant_state.preview_sprite)
         self.plant_state.stop()
-
-    def _on_gen_zombie(self, event: WillGenZombieEvent):
-        self.add_zombie_from_start(event.zombie, event.row)
-
-    def _on_check_zombie(self, event: ButtonClickEvent):
-        if '#check_zombie_button' in event.ui_element.object_ids:
-            self.camera.animate_to(self.zombie_gen_pos)
 
     def _on_pop_level(self, event: ButtonClickEvent):
         if '#pop_level_button' in event.ui_element.object_ids:
