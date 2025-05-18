@@ -1,0 +1,12 @@
+{
+  "id": "wallnut_animation",
+  "animations": {
+    "idle": [
+      {
+        "type": "sprite_sheet",
+        "frames": "./wallnut.png",
+        "frames_count": 8
+      }
+    ]
+  }
+}

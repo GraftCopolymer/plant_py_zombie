@@ -88,6 +88,7 @@ class AbstractPlant(GameSprite, abc.ABC):
         self.rect.center = self.cell.rect.center
         self.world_pos = pygame.Vector2(self.rect.topleft)
         self.level = level
+        self.level.add_plant(self)
 
     def get_preview_image(self) -> Surface:
         """
@@ -97,6 +98,9 @@ class AbstractPlant(GameSprite, abc.ABC):
 
     def hurt(self, source, damage: float) -> None:
         self.health -= damage
+        if not self.is_alive():
+            self.level.remove_plant(self)
+            return
         self.hurt_state = True
         self.hit_flash_timer = 0
 
@@ -112,6 +116,12 @@ class AbstractPlant(GameSprite, abc.ABC):
         white_mask = Surface(self.image.get_size()).convert_alpha()
         white_mask.fill((self.hit_flash_intensity, self.hit_flash_intensity, self.hit_flash_intensity, alpha))
         self.image.blit(white_mask, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
+
+    def is_alive(self):
+        """
+        当前植物是否还活着(未被销毁)
+        """
+        return self.health > 0
 
     @abstractmethod
     def load_animation(self, *args, **kwargs) -> StatefulAnimation: pass
@@ -346,6 +356,21 @@ class SunFlower(GrassPlant, TimingAction):
             self.current_action_interval = self.getNextActionInterval()
             # 生成阳光
             self.doAction()
+
+@PlantCreator.register_plant('wallnut')
+class Wallnut(GrassPlant):
+    """
+    坚果墙
+    """
+    plant_cold_down = 20000
+    sun_cost = 50
+    def __init__(self):
+        super().__init__(max_health=4000)
+
+    def load_animation(self) -> StatefulAnimation:
+        config = CharacterConfigManager().get_animation_config("wallnut_animation")
+        animation = StatefulAnimation(config.get_random_animation_group(), config.init_state)
+        return animation
 
 
 class PlantAnimator(abc.ABC):
