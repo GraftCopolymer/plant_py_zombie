@@ -76,7 +76,6 @@ class PlantGrid:
         print("放置植物")
         cell.slot.append(plant)
         plant.setup_sprite(self.group, cell, self.level)
-        self.group.add(plant)
 
     def stop_planting(self):
         print("停止种植")
