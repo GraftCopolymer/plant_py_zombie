@@ -2,7 +2,6 @@ from __future__ import annotations
 import abc
 import random
 from abc import abstractmethod
-from ctypes import cast
 from typing import Union, TYPE_CHECKING
 
 import pygame
@@ -14,49 +13,14 @@ from base.game_grid import AbstractPlantCell
 from base.sprite.game_sprite import GameSprite
 from game.character import Position
 from game.character.character_config import ZombieConfig, CharacterConfigManager
-from game.level.state_machine import State, StateMachine
+from game.character.zombie_state_machine import AbstractZombieStateMachine, ZombieStateMachine, \
+    BucketheadZombieStateMachine
 from game.level.zombie_creator import ZombieCreator
 from utils.utils import collide
 
 if TYPE_CHECKING:
     from game.level.level_scene import LevelScene
     from game.character.plant import AbstractPlant
-
-
-class AbstractZombieStateMachine(StateMachine, abc.ABC):
-    def __init__(self):
-        super().__init__()
-
-
-class ZombieStateMachine(AbstractZombieStateMachine):
-    def __init__(self):
-        super().__init__()
-        self.walk = State('walk')
-        self.idle = State('idle')
-        self.dying = State('dying')
-        self.attack = State('attack')
-        self.add_state(self.idle, {'walk'})
-        self.add_state(self.walk, {'attack', 'dying'})
-        self.add_state(self.dying, set())
-        self.add_state(self.attack, {'dying', 'walk'})
-        self.set_initial_state('walk')
-
-
-class BucketheadZombieStateMachine(ZombieStateMachine):
-    def __init__(self):
-        super().__init__()
-        # 顶着完整头盔走
-        self.walk_with_bucket = State('walk_with_bucket')
-        # 顶着破头盔走
-        self.walk_with_broken_bucket = State('walk_with_broken_bucket')
-        # 顶着头盔攻击
-        self.attack_with_bucket = State('attack_with_bucket')
-        # 注意，无头盔行走使用状态walk(父类中定义)
-        self.add_state(self.walk_with_bucket, {'walk', 'walk_with_broken_bucket', 'attack', 'attack_with_bucket', 'dying'})
-        self.add_state(self.walk_with_broken_bucket, {'walk', 'attack', 'dying'})
-        self.add_state(self.attack_with_bucket, {'attack', 'dying', 'walk', 'walk_with_bucket'})
-        self.add_transition_of(self.attack, {'walk_with_bucket', 'walk_with_broken_bucket', 'attack_with_bucket'})
-        self.set_initial_state('walk_with_bucket')
 
 
 class AbstractZombie(GameSprite, abc.ABC):

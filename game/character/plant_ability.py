@@ -2,6 +2,8 @@ import abc
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
+from game.character.plant_state_machine import AbstractPlantStateMachine
+
 if TYPE_CHECKING:
     from game.character.bullets import Bullet
 
@@ -45,5 +47,23 @@ class TimingAction(abc.ABC):
     def doAction(self) -> None:
         """
         执行操作
+        """
+        pass
+
+class StatefulPlant(abc.ABC):
+    """
+    有状态机的植物
+    """
+    @abstractmethod
+    def get_state_machine(self) -> AbstractPlantStateMachine:
+        """
+        返回当前植物的状态机
+        """
+        pass
+
+    @abstractmethod
+    def handle_state(self, *args, **kwargs) -> None:
+        """
+        处理当前植物的状态
         """
         pass

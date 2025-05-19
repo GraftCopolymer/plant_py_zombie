@@ -11,7 +11,8 @@ from base.scene import SceneManager
 from base.sprite.game_sprite import GameSprite
 from game.character.character_config import CharacterConfigManager
 from game.character.plant import PeaShooter, MachineGunShooter, IcedPeaShooter
-from game.character.zombie import ConfigZombie, ZombieStateMachine
+from game.character.zombie import ConfigZombie
+from game.character.zombie_state_machine import ZombieStateMachine
 from game.level.level_scene import LevelScene
 
 

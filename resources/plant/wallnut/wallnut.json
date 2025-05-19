@@ -7,6 +7,18 @@
         "frames": "./wallnut.png",
         "frames_count": 8
       }
+    ],
+    "cracked1": [
+      {
+        "type": "gif",
+        "frames": "./wallnut_cracked1.gif"
+      }
+    ],
+    "cracked2": [
+      {
+        "type": "gif",
+        "frames": "./wallnut_cracked2.gif"
+      }
     ]
   }
 }

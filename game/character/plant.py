@@ -13,7 +13,8 @@ from base.game_grid import AbstractPlantCell, GrassPlantCell, WaterPlantCell
 from base.sprite.game_sprite import GameSprite
 from game.character.bullets import Bullet
 from game.character.character_config import CharacterConfigManager
-from game.character.plant_ability import Shooter, TimingAction
+from game.character.plant_ability import Shooter, TimingAction, StatefulPlant
+from game.character.plant_state_machine import AbstractPlantStateMachine, WallnutStateMachine
 from game.level.state_machine import StateMachine, State
 from game.level.plant_creator import PlantCreator
 
@@ -359,7 +360,7 @@ class SunFlower(GrassPlant, TimingAction):
             self.doAction()
 
 @PlantCreator.register_plant('wallnut')
-class Wallnut(GrassPlant):
+class Wallnut(GrassPlant, StatefulPlant):
     """
     坚果墙
     """
@@ -367,11 +368,34 @@ class Wallnut(GrassPlant):
     sun_cost = 50
     def __init__(self):
         super().__init__(max_health=4000)
+        self.state_machine = WallnutStateMachine()
 
     def load_animation(self) -> StatefulAnimation:
         config = CharacterConfigManager().get_animation_config("wallnut_animation")
         animation = StatefulAnimation(config.get_random_animation_group(), config.init_state)
         return animation
+
+    def update(self, dt: float) -> None:
+        super().update(dt)
+        self.handle_state(dt)
+        print(f'当前血量: {self.health}/{self.max_health}, 占比: {self.health * 1.0 / self.max_health}')
+
+    def cracked1(self):
+        self.get_state_machine().transition_to('cracked1')
+        self.animation.change_state('cracked1')
+
+    def cracked2(self):
+        self.get_state_machine().transition_to('cracked2')
+        self.animation.change_state('cracked2')
+
+    def get_state_machine(self) -> AbstractPlantStateMachine:
+        return self.state_machine
+
+    def handle_state(self, dt: float) -> None:
+        if self.health <= self.max_health * 2/3 and self.get_state_machine().can_transition_to('cracked1'):
+            self.cracked1()
+        elif self.health <= self.max_health * 1/3 and self.get_state_machine().can_transition_to('cracked2'):
+            self.cracked2()
 
 
 class PlantAnimator(abc.ABC):

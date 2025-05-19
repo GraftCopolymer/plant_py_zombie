@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Optional, Callable, Dict, Union
 
+from traceback import print_tb
+from typing import Optional, Callable, Dict, Union
 
 class State:
     """
@@ -21,7 +22,7 @@ class StateMachine:
 
     def add_state(self, state: State, allowed_transitions: Optional[set[str]]=None):
         self.states[state.name] = state
-        self.transitions[state.name] = allowed_transitions if allowed_transitions is not None else []
+        self.transitions[state.name] = allowed_transitions if allowed_transitions is not None else set()
 
     def set_initial_state(self, state_name: str):
         if state_name not in self.states:
@@ -32,8 +33,13 @@ class StateMachine:
 
     def can_transition_to(self, target_state_name: str) -> bool:
         if not self.current_state:
+            print('self.current_state == None')
             return False
-        return target_state_name in self.transitions.get(self.current_state.name, [])
+        print(f'can from {self.current_state.name} to {target_state_name}?')
+        for k, v in self.transitions.items():
+            print(f'{k} - {v}')
+        print(f'{target_state_name} in {self.transitions.get(self.current_state.name, set())} ? {target_state_name in self.transitions.get(self.current_state.name, set())}')
+        return target_state_name in self.transitions.get(self.current_state.name, set())
 
     def set_transition_of(self, state: Union[str, State], allowed_transitions: set[str]):
         if isinstance(state, str):
