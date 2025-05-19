@@ -212,7 +212,7 @@ class LevelScene(AbstractScene):
 
     def draw(self, screen: Surface, bgsurf=None, special_flags=0) -> None:
         self.camera.draw(screen, bgsurf, special_flags)
-        self.plant_select_container.draw(screen, bgsurf, special_flags)
+        self.plant_select_container.draw(screen)
         self.in_game_selector.draw(screen)
         # UI需最后绘制以显示在所有内容之上
         self.ui_manager.draw_ui(screen)

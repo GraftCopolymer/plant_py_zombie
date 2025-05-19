@@ -49,7 +49,7 @@ class EventBus:
             return cls._instance
 
     def process_event(self):
-        # print(f"当前队列处理器个数: {len([handler for sh in self._subscribers.values() for handler in sh])}")
+        print(f"当前队列处理器个数: {len([handler for sh in self._subscribers.values() for handler in sh])}")
         for event in pygame.event.get():
             SceneManager().process_ui_event(event)
             self._dispatch_event(event)

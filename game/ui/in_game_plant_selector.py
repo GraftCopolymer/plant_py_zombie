@@ -1,81 +1,50 @@
 import copy
-from typing import Optional, Union, TYPE_CHECKING
+from typing import Union, TYPE_CHECKING
 
 import pygame
-import pygame_gui.elements
-from pygame import Surface, Vector2
-from pygame_gui import UIManager
-from pygame_gui.core import UIElement, IContainerLikeInterface, ObjectID
-from pygame_gui.core.interfaces import IUIElementInterface
+from pygame import Vector2, Surface
+from pygame_gui.core import ObjectID
 
 from base.config import FONT_PATH
 from base.listenable import ListenableValue
+from game.ui.ui_widget import UIWidget
 from utils.utils import transform_coor_sys
 
 if TYPE_CHECKING:
     from base.game_event import SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, \
-        PlantCardEndColdDown
+    PlantCardEndColdDown, SunCollectEvent
 from game.ui.plant_card import PlantCard
 
 
-class InGamePlantSelector(UIElement):
+class InGamePlantSelector(UIWidget):
     def __init__(
             self,
             cards: list[PlantCard],
-            manager: Optional[UIManager] = None,
-            container: Optional[IContainerLikeInterface] = None,
-            parent_element: Optional[IUIElementInterface] = None,
             object_id: Union[ObjectID, str, None] = None
     ):
         # 加载背景图
         self.background_path = "resources/ui/in_game_plant_selector/in_game_plant_selector.png"
-        self.background = pygame.image.load(self.background_path)
-        rect: pygame.Rect = self.background.get_bounding_rect()
         if object_id is None:
-            object_id = ObjectID(class_id="@in_game_plant_selector", object_id="#in_game_plant_selector")
+            object_id = "#in_game_plant_selector"
+            # 卡片之间的间隔
+            self.card_gap = 6
+
+            # 最多容纳8张植物卡片
+            self.max_cards_num = 8
+            self.cards = cards
+
+            # 阳光数, 可监听值, 初始为50
+            self.sun_value: ListenableValue = ListenableValue(500)
+            # 添加阳光监听器
+            self.sun_value.add_listener(self._sun_listener)
+
+            # 当前选择器的状态，为True时点击卡片将会进入植物放置阶段
+            self.can_place_plant = False
         super().__init__(
-            layer_thickness=1,
-            starting_height=1,
-            container=container,
-            parent_element=parent_element,
-            object_id=object_id,
-            element_id=["in_game_plant_selector"],
-            relative_rect=rect,
-            manager=manager,
+            object_id, pygame.image.load(self.background_path)
         )
-        self.rect: pygame.Rect = rect
-        self.blit_data[1] = self.background
 
-        # 初始化内部容器, 创建所有本对象内部的UI组件时，请将要创建的组件的构造函数的container参数填为self.panel
-        self.container_pos = pygame.Vector2(0, 0)
-        panel_rect = pygame.Rect(0, 0, rect.width, rect.height)
-        panel_rect.topleft = tuple(self.container_pos)
-        self.panel = pygame_gui.elements.UIPanel(
-            relative_rect=panel_rect,
-            starting_height=1,
-            manager=self.ui_manager
-        )
-        self.panel.background_colour = pygame.Color(0, 0, 0, 0)
-        self.panel.rebuild()
-
-        # 卡片之间的间隔
-        self.card_gap = 6
-        # 组件内部的Surface, 所有内部精灵将绘制在此表面上
-        self.container = Surface(rect.size)
-
-        # 最多容纳8张植物卡片
-        self.max_cards_num = 8
-        self.cards = cards
-
-        # 阳光数, 可监听值, 初始为50
-        self.sun_value: ListenableValue = ListenableValue(500)
-        # 添加阳光监听器
-        self.sun_value.add_listener(self._sun_listener)
-
-        # 当前选择器的状态，为True时点击卡片将会进入植物放置阶段
-        self.can_place_plant = False
-
-    def setup(self):
+    def mount(self) -> None:
         from base.game_event import EventBus, SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, \
             PlantCardEndColdDown, SunCollectEvent
         # 订阅从植物选择器选择植物卡片的事件
@@ -110,17 +79,9 @@ class InGamePlantSelector(UIElement):
             if index != length - 1:
                 cur_pos += pygame.Vector2(self.card_gap + self.cards[index].rect.width, 0)
 
-    def draw(self, surface: pygame.Surface):
-        if not self.visible:
-            return
-
-        surface.blit(self.container, self.container_pos)
-        # 将背景绘制到自身位置
-        self.container.blit(self.background, (0, 0))
+    def draw(self, surface: Surface):
+        super().draw(surface)
         self._draw_sun_text()
-
-        for card in self.cards:
-            self.container.blit(card.image, card.world_pos)
 
     def _draw_sun_text(self):
         """
@@ -128,8 +89,7 @@ class InGamePlantSelector(UIElement):
         """
         font = pygame.font.Font(FONT_PATH, 14)
         text = font.render(f'{self.sun_value.value}', True, pygame.Color(0, 0, 0))
-        text_rect = text.get_rect()
-        self.container.blit(text, Vector2(38 - text.width / 2, 75 - text.height / 2))
+        self.draw_to_spr(text, Vector2(38 - text.width / 2, 75 - text.height / 2))
 
     def update(self, dt: float):
         self.update_cards(dt)
@@ -147,15 +107,14 @@ class InGamePlantSelector(UIElement):
         if len(self.cards) >= self.max_cards_num:
             return False
         self.cards.append(card)
-        # 重新布局
-        self.layout()
+        self.add_sprite(card)
         return True
 
     def removeCard(self, card: PlantCard) -> bool:
         if len(self.cards) == 0:
             return False
         self.cards.remove(card)
-        self.layout()
+        self.remove_sprite(card)
         return True
 
     def removeCardAt(self, index: int) -> bool:
@@ -183,7 +142,7 @@ class InGamePlantSelector(UIElement):
     def _on_click(self, event: 'ClickEvent'):
         if not self.visible: return
         # 将鼠标坐标变换到容器坐标内
-        mouse_pos_in_selector = transform_coor_sys(event.mouse_pos, self.container_pos)
+        mouse_pos_in_selector = transform_coor_sys(event.mouse_pos, self.screen_pos)
         # 检测哪个卡片被选中了
         card = None
         for c in self.cards:
