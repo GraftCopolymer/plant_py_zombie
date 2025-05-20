@@ -10,10 +10,10 @@ from pygame import Surface, Vector2, Color
 
 from base.cameragroup import CameraGroup, CameraAnimator, EaseInOutQuad
 from base.config import LAYERS, AVAILABLE_PLANTS, SUN_GEN_INTERVAL_RANGE
-from base.game_event import StartPlantEvent, EventBus, MouseMotionEvent, StopPlantEvent, WillGenZombieEvent, \
-    ButtonClickEvent
+from base.game_event import StartPlantEvent, EventBus, MouseMotionEvent, StopPlantEvent, \
+    ButtonClickEvent, EndShovelingEvent
+from base.game_event import StartShovelingEvent
 from base.game_grid import PlantGrid, PlantCellFactory
-from base.listenable import ListenableValue
 from base.scene import AbstractScene, SceneManager
 from base.sprite.game_sprite import GameSprite
 from base.sprite.static_sprite import StaticSprite
@@ -24,6 +24,7 @@ from game.level.zombie_wave_scheduler import ZombieWaveScheduler
 from game.text.animated_text import TextAnimator
 from game.ui.in_game_plant_selector import InGamePlantSelector
 from game.ui.plant_select_container import PlantSelectContainer
+from game.ui.shovel import ShovelSlot, Shovel
 from utils.utils import create_ui_manager_with_theme, get_mouse_world_pos
 
 if TYPE_CHECKING:
@@ -34,31 +35,73 @@ if TYPE_CHECKING:
 
 from game.level.scene_config import GenericLevelConfig, PlantCellData
 
-
-class PlantingState:
-    """
-    种植状态管理类
-    """
-
+class InteractionStateMachine(StateMachine):
     def __init__(self):
-        self.plant: Union[AbstractPlant, None] = None
-        self.preview_sprite: Union[GameSprite, None] = None
-        self.is_planting = False
+        super().__init__()
+        self.planting = State('planting')
+        self.shoveling = State('shoveling')
+        self.normal = State('normal')
 
-    def start(self, plant: 'AbstractPlant'):
-        self.plant = plant
-        self.preview_sprite = StaticSprite([], plant.get_preview_image(), pygame.Vector2(0, 0))
-        self.preview_sprite.z = LAYERS['highlight']
-        self.is_planting = True
+        self.add_state(self.normal, {'planting', 'shoveling'})
+        self.add_state(self.planting, {'normal'})
+        self.add_state(self.shoveling, {'normal'})
+        self.set_initial_state('normal')
+
+class InteractionState:
+    """
+    关卡交互状态类
+    """
+    def __init__(self):
+        # 处于种植状态时, 此处储存即将种植的植物对象
+        self.plant: Union[AbstractPlant, None] = None
+        # 跟随鼠标运动的预览精灵图
+        self.preview_sprite: Union[GameSprite, None] = None
+        # 交互状态机
+        self.state_machine = InteractionStateMachine()
+
+    def start_planting(self, plant: 'AbstractPlant'):
+        if self.state_machine.can_transition_to('planting'):
+            self.plant = plant
+            self.preview_sprite = StaticSprite([], plant.get_preview_image(), pygame.Vector2(0, 0))
+            self.preview_sprite.z = LAYERS['highlight']
+            self.state_machine.transition_to('planting')
+
+    def stop_planting(self):
+        if self.state_machine.can_transition_to('normal'):
+            self.plant = None
+            self.preview_sprite = None
+            self.state_machine.transition_to('normal')
+
+    def start_shoveling(self):
+        if self.state_machine.can_transition_to('shoveling'):
+            self.preview_sprite = Shovel([])
+            self.preview_sprite.z = LAYERS['highlight']
+            self.state_machine.transition_to('shoveling')
+
+    def stop_shoveling(self):
+        if self.state_machine.can_transition_to('normal'):
+            self.plant = None
+            self.preview_sprite = None
+            self.state_machine.transition_to('normal')
+
+    def is_planting(self):
+        return self.state_machine.get_state() == 'planting'
+
+    def is_shoveling(self):
+        return self.state_machine.get_state() == 'shoveling'
+
+    def can_planting(self):
+        return self.state_machine.can_transition_to('planting')
+
+    def can_shoveling(self):
+        return self.state_machine.can_transition_to('shoveling')
+
+    def can_normal(self):
+        return self.state_machine.can_transition_to('normal')
 
     def setup_preview(self, group: pygame.sprite.Group, position: pygame.Vector2):
         self.preview_sprite.group = group
         self.preview_sprite.set_position(position)
-
-    def stop(self):
-        self.plant = None
-        self.preview_sprite = None
-        self.is_planting = False
 
     def get_plant(self) -> Union['AbstractPlant', None]:
         return self.plant
@@ -68,9 +111,8 @@ class LevelStateMachine(StateMachine):
     """
     状态: before_start(开始前准备状态), progress(进行中), end(结束状态)
     """
-    def __init__(self, level: LevelScene):
+    def __init__(self):
         super().__init__()
-        self.level = level
         # 开始前状态
         self.before_start = State('before_start')
         # 进行中状态
@@ -118,15 +160,15 @@ class LevelScene(AbstractScene):
         self.bullets: list['Bullet'] = []
         # 阳光对象列表
         self.suns: list['Sun'] = []
-        # 种植状态
-        self.plant_state = PlantingState()
         # 相机初始位置
         self.camera_init_pos = Vector2(200, 0)
         self.camera.move_to(self.camera_init_pos)
         # 僵尸生成线位置（仅x坐标有效）
         self.zombie_gen_pos = Vector2(400, 0)
         # 关卡状态
-        self.level_state = LevelStateMachine(self)
+        self.level_state = LevelStateMachine()
+        # 关卡交互状态
+        self.interaction_state = InteractionState()
         # 僵尸波次调度器
         self.zombie_scheduler = self._init_scheduler(config_path)
         # 阳光生成器
@@ -205,8 +247,12 @@ class LevelScene(AbstractScene):
         self.flow.add_part(FlowPart(_start_level))
 
     def _init_ui(self):
+        # 出战植物选择
         self.plant_select_container: Optional[PlantSelectContainer] = PlantSelectContainer.fromFile(AVAILABLE_PLANTS)
+        # 游戏内植物选择器
         self.in_game_selector = InGamePlantSelector([])
+        # 铲子插槽
+        self.shovel_slot = ShovelSlot()
         self.in_game_selector.visible = False
         self.plant_select_container.visible = False
 
@@ -214,6 +260,7 @@ class LevelScene(AbstractScene):
         self.camera.draw(screen, bgsurf, special_flags)
         self.plant_select_container.draw(screen)
         self.in_game_selector.draw(screen)
+        self.shovel_slot.draw(screen)
         # UI需最后绘制以显示在所有内容之上
         self.ui_manager.draw_ui(screen)
 
@@ -240,6 +287,7 @@ class LevelScene(AbstractScene):
 
         self.plant_select_container.update(dt)
         self.in_game_selector.update(dt)
+        self.shovel_slot.update(dt)
         self.ui_manager.update(dt)
 
     def update_zombie_scheduler(self, dt: float):
@@ -366,8 +414,8 @@ class LevelScene(AbstractScene):
                                                                                   cell.column, cell.position, cell.size)
         self.grid = PlantGrid(group, cell_matrix, self)
 
-    def get_plant_state(self) -> PlantingState:
-        return self.plant_state
+    def get_interaction_state(self) -> InteractionState:
+        return self.interaction_state
 
     def setup_ui(self, *args, **kwargs) -> None:
         pop_level_button_rect = pygame.Rect(0, 0, 100, 60)
@@ -385,6 +433,7 @@ class LevelScene(AbstractScene):
         # 这俩的setup方法中有事件订阅, 需要在detach_scene中调用destroy方法取消订阅
         self.plant_select_container.setup()
         self.in_game_selector.setup()
+        self.shovel_slot.setup(self)
 
     def setup_scene(self, manager: SceneManager) -> None:
         super().setup_scene(manager)
@@ -398,6 +447,8 @@ class LevelScene(AbstractScene):
         EventBus().subscribe(StopPlantEvent, self._on_stop_planting)
         EventBus().subscribe(ButtonClickEvent, self._on_pop_level)
         EventBus().subscribe(ButtonClickEvent, self._on_start_fight)
+        EventBus().subscribe(StartShovelingEvent, self._on_shoveling)
+        EventBus().subscribe(EndShovelingEvent, self._on_stop_shoveling)
 
     def unmount(self):
         EventBus().unsubscribe(StartPlantEvent, self._on_plant)
@@ -405,8 +456,11 @@ class LevelScene(AbstractScene):
         EventBus().unsubscribe(StopPlantEvent, self._on_stop_planting)
         EventBus().unsubscribe(ButtonClickEvent, self._on_pop_level)
         EventBus().unsubscribe(ButtonClickEvent, self._on_start_fight)
+        EventBus().unsubscribe(StartShovelingEvent, self._on_shoveling)
+        EventBus().unsubscribe(EndShovelingEvent, self._on_stop_shoveling)
         self.plant_select_container.unmount()
         self.in_game_selector.unmount()
+        self.shovel_slot.unmount()
         self.grid.unmount()
         all_sprite = [self.plants, self.zombies, self.suns]
         for lis in all_sprite:
@@ -419,14 +473,22 @@ class LevelScene(AbstractScene):
             self.plant_select_container.process_event(event)
 
     def _on_plant(self, event: StartPlantEvent) -> None:
-        if self.plant_state.is_planting: return
+        if not self.interaction_state.can_planting(): return
         print("通知网格进入种植状态")
         print(f'收到事件的场景名称: {self.name}')
         # 进入种植状态
-        self.plant_state.start(event.plant)
+        self.interaction_state.start_planting(event.plant)
         self.grid.start_selecting()
-        self.plant_state.setup_preview(self.camera, get_mouse_world_pos(self.camera.world_pos))
-        self.add(self.plant_state.preview_sprite)
+        self.interaction_state.setup_preview(self.camera, get_mouse_world_pos(self.camera.world_pos))
+        self.add(self.interaction_state.preview_sprite)
+
+    def _on_shoveling(self, event: 'StartShovelingEvent'):
+        if not self.interaction_state.can_shoveling(): return
+        print("进入铲植物状态")
+        self.interaction_state.start_shoveling()
+        self.grid.start_selecting()
+        self.interaction_state.setup_preview(self.camera, get_mouse_world_pos(self.camera.world_pos) - Vector2(0, self.interaction_state.preview_sprite.rect.height))
+        self.add(self.interaction_state.preview_sprite)
 
     def _on_mouse_move(self, event: MouseMotionEvent):
         """
@@ -434,12 +496,19 @@ class LevelScene(AbstractScene):
         :param event:
         :return:
         """
-        if self.plant_state.is_planting:
-            self.plant_state.preview_sprite.set_position(get_mouse_world_pos(self.camera.world_pos))
+        if self.interaction_state.is_planting():
+            self.interaction_state.preview_sprite.set_position(get_mouse_world_pos(self.camera.world_pos))
+        elif self.interaction_state.is_shoveling():
+            self.interaction_state.preview_sprite.set_position(get_mouse_world_pos(self.camera.world_pos) - Vector2(0, self.interaction_state.preview_sprite.rect.height))
 
     def _on_stop_planting(self, event: StopPlantEvent):
-        self.remove(self.plant_state.preview_sprite)
-        self.plant_state.stop()
+        self.remove(self.interaction_state.preview_sprite)
+        self.interaction_state.stop_planting()
+
+    def _on_stop_shoveling(self, event: EndShovelingEvent):
+        self.remove(self.interaction_state.preview_sprite)
+        self.interaction_state.stop_shoveling()
+        self.grid.stop_selecting()
 
     def _on_pop_level(self, event: ButtonClickEvent):
         if '#pop_level_button' in event.ui_element.object_ids:

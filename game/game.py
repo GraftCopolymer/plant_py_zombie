@@ -4,7 +4,6 @@ import pygame
 import pygame_gui
 from pygame import Clock, Surface
 
-from base.cameragroup import CameraAnimator, EaseInOutQuad
 from base.game_event import EventBus, ButtonClickEvent, StartPlantEvent, WillGenZombieEvent
 from base.resource_loader import ResourceLoader
 from base.scene import SceneManager

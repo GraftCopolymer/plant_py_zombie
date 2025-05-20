@@ -13,7 +13,7 @@ from utils.utils import create_ui_manager_with_theme
 
 class UIWidget(abc.ABC):
     object_ids: list[str] = []
-    def __init__(self, object_id: str, background: Optional[Surface], size: Optional[Vector2] = Vector2(0,0), background_color: Color = Color(0,0,0,255)):
+    def __init__(self, object_id: str, background: Optional[Surface], size: Optional[Vector2] = Vector2(0,0), background_color: Color = Color(0,0,0,0)):
         if not self._check_object_id(object_id):
             raise ValueError(f'The id {object_id} already exists.')
 

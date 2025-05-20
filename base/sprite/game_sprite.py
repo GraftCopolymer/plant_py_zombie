@@ -20,6 +20,9 @@ class GameSprite(pygame.sprite.Sprite, abc.ABC):
         self.speed = speed
         self.rect: Union[pygame.Rect, None] = None
         self.image = image
+        if self.image:
+            self.rect = self.image.get_bounding_rect()
+            self.rect.topleft = self.world_pos.copy()
         self.z = z
         # 图片偏移（由于有些gif图有大量透明像素，图片矩形并不适合用来做碰撞检测，所以图片需要和矩形框分开计算，该变量是为了将图片与矩形框对齐的偏移量）
         self.image_offset: pygame.Vector2 = pygame.Vector2(0, 0)

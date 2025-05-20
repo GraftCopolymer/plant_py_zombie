@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from game.character.zombie import AbstractZombie
     from game.ui.plant_card import PlantCard
     from game.level.sun import Sun
+    from game.level.level_scene import LevelScene
 
 
 T = TypeVar("T", bound="Event")
@@ -209,8 +210,7 @@ class WillGenZombieEvent(Event):
         self.row = row
 
 class NextLevelEvent(Event):
-    from game.level.level_scene import LevelScene
-    def __init__(self, level: LevelScene):
+    def __init__(self, level: 'LevelScene'):
         super().__init__()
         self.next_level = level
 
@@ -248,3 +248,11 @@ class SunCollectEvent(Event):
     def __init__(self, sun: 'Sun'):
         super().__init__()
         self.sun = sun
+
+class StartShovelingEvent(Event):
+    def __init__(self):
+        super().__init__()
+
+class EndShovelingEvent(Event):
+    def __init__(self):
+        super().__init__()

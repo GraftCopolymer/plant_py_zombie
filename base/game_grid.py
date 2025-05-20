@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import enum
 from abc import abstractmethod
-from typing import Union, TYPE_CHECKING
+from typing import Union, TYPE_CHECKING, Optional
 
 import pygame.sprite
 
@@ -66,21 +66,34 @@ class PlantGrid:
             self.selected_cell = target_cell
 
     def _on_mouse_click(self, event: ClickEvent):
-        if self.grid_status == PlantGridStatus.SELECTING and self.selected_cell is not None and self.level.get_plant_state().is_planting:
-            plant = self.level.get_plant_state().get_plant()
-            if plant is not None:
-                self.place_plant(self.selected_cell, plant)
-                self.stop_planting()
+        if self.grid_status == PlantGridStatus.SELECTING and self.selected_cell is not None:
+            if self.level.get_interaction_state().is_planting():
+                plant = self.level.get_interaction_state().get_plant()
+                if plant is not None:
+                    self.place_plant(self.selected_cell, plant)
+                    self.stop_planting()
+            elif self.level.get_interaction_state().is_shoveling():
+                self.shovel_plant(self.selected_cell)
 
     def place_plant(self, cell: AbstractPlantCell, plant: AbstractPlant) -> None:
         print("放置植物")
         cell.slot.append(plant)
         plant.setup_sprite(self.group, cell, self.level)
 
+    def shovel_plant(self, cell: AbstractPlantCell, only_top=True) -> Optional[AbstractPlant]:
+        print("铲除植物")
+        plants = cell.slot[:]
+        if len(plants) == 0: return None
+        plants.sort(key=lambda pl: pl.z)
+        target: AbstractPlant = plants[-1]
+        cell.slot.remove(target)
+        self.level.remove_plant(target)
+        return target
+
     def stop_planting(self):
         print("停止种植")
         # 触发结束种植事件
-        EventBus().publish(StopPlantEvent(self.level.get_plant_state().plant, self.selected_cell))
+        EventBus().publish(StopPlantEvent(self.level.get_interaction_state().plant, self.selected_cell))
         self.selected_cell = None
         self.grid_status = PlantGridStatus.NORMAL
         self.cancel_all_highlight()
@@ -88,6 +101,9 @@ class PlantGrid:
     def start_selecting(self):
         print("网格开始选择种植单元格")
         self.grid_status = PlantGridStatus.SELECTING
+
+    def stop_selecting(self):
+        self.grid_status = PlantGridStatus.NORMAL
 
     def update(self, dt: float):
         for row in self.grid_data:
@@ -228,7 +244,7 @@ class AbstractPlantCell(GridCell, abc.ABC):
         self.highlight_mask.image.fill((255, 255, 255, 100))
         self.debug_point_pos = self.get_center_pos()
         # 单元格槽位，一个列表，其中的对象将被重叠显示，受对象的图层影响
-        self.slot: list[GameSprite] = []
+        self.slot: list[AbstractPlant] = []
 
         # self.rect_sprite = StaticSprite(group, pygame.Surface(self.rect.size), self.position.copy())
         # center_dot = StaticSprite(group, pygame.Surface((10,10)),self.get_center_pos())
