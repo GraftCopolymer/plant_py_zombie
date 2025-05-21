@@ -10,6 +10,7 @@ from pygame import Surface, Vector2, Color
 
 from base.cameragroup import CameraGroup, CameraAnimator, EaseInOutQuad
 from base.config import LAYERS, AVAILABLE_PLANTS, SUN_GEN_INTERVAL_RANGE
+from base.game_event import KeyDownEvent
 from base.game_event import StartPlantEvent, EventBus, MouseMotionEvent, StopPlantEvent, \
     ButtonClickEvent, EndShovelingEvent
 from base.game_event import StartShovelingEvent
@@ -449,6 +450,7 @@ class LevelScene(AbstractScene):
         EventBus().subscribe(ButtonClickEvent, self._on_start_fight)
         EventBus().subscribe(StartShovelingEvent, self._on_shoveling)
         EventBus().subscribe(EndShovelingEvent, self._on_stop_shoveling)
+        EventBus().subscribe(KeyDownEvent, self._on_key_pressed)
 
     def unmount(self):
         EventBus().unsubscribe(StartPlantEvent, self._on_plant)
@@ -458,6 +460,7 @@ class LevelScene(AbstractScene):
         EventBus().unsubscribe(ButtonClickEvent, self._on_start_fight)
         EventBus().unsubscribe(StartShovelingEvent, self._on_shoveling)
         EventBus().unsubscribe(EndShovelingEvent, self._on_stop_shoveling)
+        EventBus().unsubscribe(KeyDownEvent, self._on_key_pressed)
         self.plant_select_container.unmount()
         self.in_game_selector.unmount()
         self.shovel_slot.unmount()
@@ -509,6 +512,21 @@ class LevelScene(AbstractScene):
         self.remove(self.interaction_state.preview_sprite)
         self.interaction_state.stop_shoveling()
         self.grid.stop_selecting()
+
+    def _on_key_pressed(self, event: 'KeyDownEvent') -> None:
+        if event.key != pygame.K_ESCAPE: return
+        # 按下esc时停止种植或铲植物
+        if self.interaction_state.is_shoveling():
+            self.remove(self.interaction_state.preview_sprite)
+            self.interaction_state.stop_shoveling()
+            self.grid.stop_selecting()
+            EventBus().publish(EndShovelingEvent())
+            event.mark_handled()
+        elif self.interaction_state.is_planting():
+            self.remove(self.interaction_state.preview_sprite)
+            self.interaction_state.stop_planting()
+            self.grid.stop_planting()
+            event.mark_handled()
 
     def _on_pop_level(self, event: ButtonClickEvent):
         if '#pop_level_button' in event.ui_element.object_ids:

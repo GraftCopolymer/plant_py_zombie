@@ -104,6 +104,7 @@ class PlantGrid:
 
     def stop_selecting(self):
         self.grid_status = PlantGridStatus.NORMAL
+        self.cancel_all_highlight()
 
     def update(self, dt: float):
         for row in self.grid_data:

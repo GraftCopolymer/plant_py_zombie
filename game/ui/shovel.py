@@ -38,9 +38,11 @@ class ShovelSlot(UIWidget):
 
     def mount(self) -> None:
         EventBus().subscribe(ClickEvent, self._on_click)
+        EventBus().subscribe(EndShovelingEvent, self._on_stop_shoveling)
 
     def unmount(self) -> None:
         EventBus().unsubscribe(ClickEvent, self._on_click)
+        EventBus().unsubscribe(EndShovelingEvent, self._on_stop_shoveling)
 
     def layout(self) -> None:
         pass
@@ -54,10 +56,15 @@ class ShovelSlot(UIWidget):
         if self.level.interaction_state.is_shoveling():
             # 正在铲植物状态，再次点击可退出铲植物状态
             # 重新显示铲子
-            self.shovel = Shovel([])
-            self.add_sprite(self.shovel)
             EventBus().publish(EndShovelingEvent())
         elif self.level.interaction_state.can_shoveling():
             # 移除铲子
-            self.remove_sprite(self.shovel)
-            EventBus().publish(StartShovelingEvent())
+            if self.shovel in self.sprites:
+                self.remove_sprite(self.shovel)
+                EventBus().publish(StartShovelingEvent())
+
+    def _on_stop_shoveling(self, event: 'EndShovelingEvent'):
+        # 铲子已存在，无需重复添加
+        if len(self.sprites) != 0: return
+        self.shovel = Shovel([])
+        self.add_sprite(self.shovel)

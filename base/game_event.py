@@ -72,7 +72,7 @@ class EventBus:
         elif event.type == pygame_gui.UI_BUTTON_PRESSED:
             EventBus().publish(ButtonClickEvent(event.ui_element))
         elif event.type == pygame.KEYDOWN:
-            EventBus().publish(KeyboardEvent(event.key))
+            EventBus().publish(KeyDownEvent(event.key))
 
     def subscribe(self, event_type: Type[T], handler: EventHandler[T],
                   priority: int = 0, once: bool = False) -> Subscription:
@@ -169,7 +169,7 @@ class MouseEvent(Event):
         """
         return self.mouse_pos + camera_pos
 
-class KeyboardEvent(Event):
+class KeyDownEvent(Event):
     """
     键盘某个键按下事件
     """
