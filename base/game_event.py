@@ -71,6 +71,8 @@ class EventBus:
             EventBus().publish(event)
         elif event.type == pygame_gui.UI_BUTTON_PRESSED:
             EventBus().publish(ButtonClickEvent(event.ui_element))
+        elif event.type == pygame.KEYDOWN:
+            EventBus().publish(KeyboardEvent(event.key))
 
     def subscribe(self, event_type: Type[T], handler: EventHandler[T],
                   priority: int = 0, once: bool = False) -> Subscription:
@@ -167,6 +169,14 @@ class MouseEvent(Event):
         """
         return self.mouse_pos + camera_pos
 
+class KeyboardEvent(Event):
+    """
+    键盘某个键按下事件
+    """
+    def __init__(self, key: int):
+        super().__init__()
+        self.key: int = key
+
 class ClickEvent(MouseEvent):
     def __init__(self, mouse_pos: pygame.Vector2):
         super().__init__(mouse_pos)
@@ -185,6 +195,8 @@ class MouseMotionEvent(MouseEvent):
         """
         super().__init__(mouse_pos)
         self.last_pos = last_pos
+
+
 
 class StartPlantEvent(Event):
     """
