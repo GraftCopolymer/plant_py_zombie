@@ -1,0 +1,10 @@
+{
+  "id": "conehead_zombie",
+  "animation": "./conehead_zombie_animation.json",
+  "health": {
+    "min": 750,
+    "max": 760
+  },
+  "zombie_offset": [0,20],
+  "speed": 15
+}

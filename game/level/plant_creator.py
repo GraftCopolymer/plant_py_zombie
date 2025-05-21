@@ -14,9 +14,9 @@ class PlantCreator:
     @staticmethod
     def register_plant(name: str):
         def wrapper(plant_cls: Type['AbstractPlant']):
+            print(f'已加载植物: {plant_cls}')
             PlantCreator.plant_registries[name] = plant_cls
             return plant_cls
-
         return wrapper
 
     @staticmethod

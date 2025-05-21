@@ -1,0 +1,19 @@
+{
+  "id": "sun_shroom_animation",
+  "animations": {
+    "small_idle": [
+      {
+        "type": "gif",
+        "frames": "./SunShroom2.gif",
+        "frames_count": 8
+      }
+    ],
+    "big_idle": [
+      {
+        "type": "gif",
+        "frames": "./SunShroom.gif",
+        "frames_count": 8
+      }
+    ]
+  }
+}

@@ -43,3 +43,19 @@ class BucketheadZombieStateMachine(ZombieStateMachine):
         self.add_state(self.attack_with_bucket, {'attack', 'dying', 'walk', 'walk_with_bucket'})
         self.add_transition_of(self.attack, {'walk_with_bucket', 'walk_with_broken_bucket', 'attack_with_bucket'})
         self.set_initial_state('walk_with_bucket')
+
+class ConeheadZombieStateMachine(ZombieStateMachine):
+    def __init__(self):
+        super().__init__()
+        # 顶着完整路障走
+        self.walk_with_cone = State('walk_with_cone')
+        # 顶着破路障走
+        self.walk_with_broken_cone = State('walk_with_broken_cone')
+        # 顶着路障攻击
+        self.attack_with_cone = State('attack_with_cone')
+        # 注意，无路障行走使用状态walk(父类中定义)
+        self.add_state(self.walk_with_cone, {'walk', 'walk_with_broken_cone', 'attack', 'attack_with_cone', 'dying'})
+        self.add_state(self.walk_with_broken_cone, {'walk', 'attack', 'dying'})
+        self.add_state(self.attack_with_cone, {'attack', 'dying', 'walk', 'walk_with_cone'})
+        self.add_transition_of(self.attack, {'walk_with_cone', 'walk_with_broken_cone', 'attack_with_cone'})
+        self.set_initial_state('walk_with_cone')

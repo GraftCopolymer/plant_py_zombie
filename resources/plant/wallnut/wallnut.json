@@ -1,7 +1,7 @@
 {
   "id": "wallnut_animation",
   "animations": {
-    "idle": [
+    "healthy": [
       {
         "type": "sprite_sheet",
         "frames": "./wallnut.png",

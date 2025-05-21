@@ -5,6 +5,7 @@ from pygame_gui.elements import UIButton
 
 from base.game_event import ButtonClickEvent, EventBus
 from base.scene import AbstractScene, SceneManager
+from game.level.level_creator import LevelCreator
 from game.level.level_scene import LevelScene
 from game.ui.plant_select_container import PlantSelectContainer
 from utils.utils import create_ui_manager_with_theme
@@ -77,5 +78,5 @@ class MainMenuScene(AbstractScene):
 
     def _on_start_game(self, event: ButtonClickEvent):
         if "#start_game_button" in event.ui_element.object_ids:
-            SceneManager().push_scene(LevelScene('./resources/level/first_day/first_day.tmx', "first_day"))
+            SceneManager().push_scene(LevelCreator.create_level('night_level'))
 

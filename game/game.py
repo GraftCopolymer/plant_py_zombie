@@ -80,6 +80,9 @@ class Game:
         ResourceLoader().load_plant_animation(Game.plant_animation_path)
         # 加载UI主题
         ResourceLoader().load_theme_to_manager(Game.theme_path, Game.ui_manager)
+        # 触发僵尸、植物、关卡的注册(不可删除!)
+        import game.level.levels.all_levels
+        import game.character.plant, game.character.zombie
 
     @staticmethod
     def bullet_in_screen(sprite: GameSprite) -> bool:

@@ -14,7 +14,7 @@ from base.sprite.game_sprite import GameSprite
 from game.character import Position
 from game.character.character_config import ZombieConfig, CharacterConfigManager
 from game.character.zombie_state_machine import AbstractZombieStateMachine, ZombieStateMachine, \
-    BucketheadZombieStateMachine
+    BucketheadZombieStateMachine, ConeheadZombieStateMachine
 from game.level.zombie_creator import ZombieCreator
 from utils.utils import collide
 
@@ -398,6 +398,68 @@ class BucketheadZombie(ConfigZombie):
 
     def attack_with_bucket(self):
         self.state_machine.transition_to("attack_with_bucket")
+        self.animation.change_state(self.state_machine.get_state())
+
+
+@ZombieCreator.register_zombie('conehead_zombie')
+class ConeheadZombie(ConfigZombie):
+    """
+    铁桶僵尸
+    """
+
+    def __init__(self, group: Union[pygame.sprite.Group, list]):
+        super().__init__(CharacterConfigManager().get_zombie_config('conehead_zombie'),
+                         ConeheadZombieStateMachine(), group)
+        self.damage = 20
+        self.attack_interval = 400
+
+    def update(self, dt: float):
+        super().update(dt)
+        if self.health <= 270 and self.get_state() == 'walk_with_cone':
+            self.walk()
+        # walk状态在父类中已处理，无需重复处理
+        if self.get_state() in ['walk_with_cone']:
+            self.move(dt)
+
+    def walk(self):
+        if self.health <= 270:
+            super().walk()
+        else:
+            self.walk_with_bucket()
+
+    def attack(self):
+        if self.health <= 270:
+            super().attack()
+        else:
+            self.attack_with_bucket()
+
+    def handle_state(self, dt: float):
+        # 单独处理 attack_with_bucket状态
+        if self.get_state() == 'attack_with_cone':
+            if self.health <= 270 and self.state_machine.can_transition_to('attack'):
+                self.attack()
+                return
+            self.attack_timer += dt
+            # 如果附近没有攻击对象，则退出攻击状态
+            attack_targets = self.detect_targets()
+            if len(attack_targets) == 0:
+                self.walk()
+            elif self.attack_timer >= self.attack_interval:
+                # 有可攻击对象, 选择图层在最上面的植物进行攻击(此处无需对attack_target额外排序, detect_target方法内部已经排好了序)
+                target = attack_targets[-1]
+                target.hurt(self, self.damage)
+                self.attack_timer = 0
+            if self.hurt_state:
+                self.hit_flash(dt)
+        else:
+            super().handle_state(dt)
+
+    def walk_with_bucket(self):
+        self.state_machine.transition_to("walk_with_cone")
+        self.animation.change_state(self.state_machine.get_state())
+
+    def attack_with_bucket(self):
+        self.state_machine.transition_to("attack_with_cone")
         self.animation.change_state(self.state_machine.get_state())
 
 

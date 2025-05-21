@@ -26,3 +26,15 @@ class WallnutStateMachine(AbstractPlantStateMachine):
         self.add_state(self.cracked1, {'cracked2'})
         self.add_state(self.cracked2, set()) # cracked2 状态无法再跳到其他状态
         self.set_initial_state('healthy')
+
+class SunShroomStateMachine(AbstractPlantStateMachine):
+    """
+    阳光菇状态机
+    """
+    def __init__(self):
+        super().__init__()
+        self.small_idle = State('small_idle')
+        self.big_idle = State('big_idle')
+        self.add_state(self.small_idle, {'big_idle'})
+        self.add_state(self.big_idle)
+        self.set_initial_state('small_idle')

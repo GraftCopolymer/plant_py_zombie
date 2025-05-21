@@ -93,6 +93,7 @@ class UIWidget(abc.ABC):
         self.mount()
 
     def destroy(self) -> None:
+        self.ui_manager.clear_and_reset()
         self.unmount()
 
     @abstractmethod

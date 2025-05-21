@@ -33,12 +33,7 @@ class StateMachine:
 
     def can_transition_to(self, target_state_name: str) -> bool:
         if not self.current_state:
-            print('self.current_state == None')
             return False
-        print(f'can from {self.current_state.name} to {target_state_name}?')
-        for k, v in self.transitions.items():
-            print(f'{k} - {v}')
-        print(f'{target_state_name} in {self.transitions.get(self.current_state.name, set())} ? {target_state_name in self.transitions.get(self.current_state.name, set())}')
         return target_state_name in self.transitions.get(self.current_state.name, set())
 
     def set_transition_of(self, state: Union[str, State], allowed_transitions: set[str]):

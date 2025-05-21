@@ -1,0 +1,58 @@
+{
+  "id": "conehead_zombie_animation",
+  "animations": {
+    "idle": [
+      {
+        "type": "gif",
+        "frames": "./1.gif",
+        "interval": 100
+      },
+      {
+        "type": "gif",
+        "frames": "./0.gif",
+        "interval": 100
+      }
+    ],
+    "attack": [
+      {
+        "type": "gif",
+        "frames": "./ZombieAttack.gif",
+        "interval": 100,
+        "offset": [65, 20]
+      }
+    ],
+     "attack_with_cone": [
+      {
+        "type": "gif",
+        "frames": "./ConeheadZombieAttack.gif",
+        "interval": 100,
+        "offset": [80, 20]
+      }
+    ],
+    "walk": [
+      {
+        "type": "gif",
+        "frames": "./Zombie.gif",
+        "interval": 100,
+        "offset": [65, 25]
+      }
+    ],
+    "walk_with_cone": [
+      {
+        "type": "gif",
+        "frames": "./ConeheadZombie.gif",
+        "interval": 100,
+        "offset": [65, 20]
+      }
+    ],
+    "dying": [
+      {
+        "type": "gif",
+        "frames": "./ZombieDie.gif",
+        "play_mode": "once",
+        "offset": [65, 20]
+      }
+    ]
+  },
+  "init_state": "idle"
+}

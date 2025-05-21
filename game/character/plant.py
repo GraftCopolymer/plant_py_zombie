@@ -14,7 +14,7 @@ from base.sprite.game_sprite import GameSprite
 from game.character.bullets import Bullet
 from game.character.character_config import CharacterConfigManager
 from game.character.plant_ability import Shooter, TimingAction, StatefulPlant
-from game.character.plant_state_machine import AbstractPlantStateMachine, WallnutStateMachine
+from game.character.plant_state_machine import AbstractPlantStateMachine, WallnutStateMachine, SunShroomStateMachine
 from game.level.state_machine import StateMachine, State
 from game.level.plant_creator import PlantCreator
 
@@ -352,6 +352,9 @@ class SunFlower(GrassPlant, TimingAction):
 
     def update(self, dt: float) -> None:
         super().update(dt)
+        if hasattr(self.level, 'is_night') and self.level.is_night:
+            # 向日葵在夜晚无法生成阳光
+            return
         self.produce_timer += dt
         if self.produce_timer >= self.current_action_interval:
             self.produce_timer = 0
@@ -378,7 +381,6 @@ class Wallnut(GrassPlant, StatefulPlant):
     def update(self, dt: float) -> None:
         super().update(dt)
         self.handle_state(dt)
-        print(f'当前血量: {self.health}/{self.max_health}, 占比: {self.health * 1.0 / self.max_health}')
 
     def cracked1(self):
         self.get_state_machine().transition_to('cracked1')
@@ -396,6 +398,77 @@ class Wallnut(GrassPlant, StatefulPlant):
             self.cracked1()
         elif self.health <= self.max_health * 1/3 and self.get_state_machine().can_transition_to('cracked2'):
             self.cracked2()
+
+@PlantCreator.register_plant('sun_shroom')
+class SunShroom(GrassPlant, StatefulPlant, TimingAction):
+    """
+    阳光菇
+    """
+    sun_cost = 25
+    plant_cold_down = 7000
+    # 最小阳光生成间隔
+    min_sun_produce_interval = 4000
+    # 最大阳光生成间隔
+    max_sun_produce_interval = 7000
+    # 生长时间
+    grow_time = 10000
+    def __init__(self):
+        super().__init__(max_health=100)
+        self.state_machine = SunShroomStateMachine()
+        self.grow_timer = 0
+        self.sun_produce_timer = 0
+        self.sun_produce_interval = self.getNextActionInterval()
+
+    def update(self, dt: float) -> None:
+        super().update(dt)
+        self.sun_produce_timer += dt
+        if self.sun_produce_timer >= self.sun_produce_interval:
+            self.sun_produce_timer = 0
+            self.sun_produce_interval = self.getNextActionInterval()
+            # 产生阳光
+            self.doAction()
+        self.handle_state(dt)
+
+    def load_animation(self, *args, **kwargs) -> StatefulAnimation:
+        config = CharacterConfigManager().get_animation_config('sun_shroom_animation')
+        return StatefulAnimation(config.get_random_animation_group(), config.init_state)
+
+    def grow(self):
+        """
+        生长至成年状态
+        """
+        self.state_machine.transition_to('big_idle')
+        self.animation.change_state(self.state_machine.get_state())
+
+    def get_state_machine(self) -> AbstractPlantStateMachine:
+        return self.state_machine
+
+    def handle_state(self, dt: float) -> None:
+        if self.state_machine.get_state() == 'small_idle':
+            self.grow_timer += dt
+            if self.grow_timer >= SunShroom.grow_time and self.state_machine.can_transition_to('big_idle'):
+                self.grow()
+                self.grow_timer = 0
+
+    def getNextActionInterval(self) -> int:
+        return random.randint(SunShroom.min_sun_produce_interval, SunShroom.max_sun_produce_interval)
+
+    def doAction(self) -> None:
+        # 根据当前的生长状态生成阳光
+        # 幼年时生成15阳光值的阳光，成年生成25阳光值阳光
+        sun_value = 0
+        if self.state_machine.get_state() == 'small_idle':
+            sun_value = 15
+        elif self.state_machine.get_state() == 'big_idle':
+            sun_value = 25
+        from game.level.sun import Sun
+        spawn_pos = self.world_pos.copy()
+        # 在距离生成处的位置随机生成一个任意方向的变量作为阳光的目的地
+        des_direct = Vector2(random.uniform(-1, 1), random.uniform(-1, 1)).normalize()
+        des_distance = 30
+        sun = Sun(self.level.camera, spawn_pos, spawn_pos + des_direct * des_distance)
+        sun.value = sun_value
+        sun.setup_sprite(self.level, revise=False)
 
 
 class PlantAnimator(abc.ABC):

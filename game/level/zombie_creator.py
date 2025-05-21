@@ -14,6 +14,7 @@ class ZombieCreator:
     @staticmethod
     def register_zombie(name: str):
         def wrapper(zombie_cls: Type['AbstractZombie']):
+            print(f'已加载僵尸: {zombie_cls}')
             ZombieCreator.zombie_registries[name] = zombie_cls
             return zombie_cls
         return wrapper

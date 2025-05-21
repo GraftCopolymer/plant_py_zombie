@@ -148,7 +148,6 @@ class LevelScene(AbstractScene):
             'init': "First Day",
             'will_start0': "Ready...",
             'will_start1': "Fight!",
-            'many_zombies': "一大波僵尸即将来袭!"
         }
         self.text_animator = TextAnimator(self.camera)
         # 初始化种植单元格
@@ -269,7 +268,7 @@ class LevelScene(AbstractScene):
         self.flow.update(dt)
         super().update(dt)
         # 更新阳光生成计时器
-        if self.can_add_sum():
+        if self.can_naturally_gen_sum():
             self.sun_gen_timer += dt
             if self.sun_gen_timer >= self.sun_gen_interval:
                 # 生成阳光
@@ -365,9 +364,9 @@ class LevelScene(AbstractScene):
         self.remove(sun)
         self.suns.remove(sun)
 
-    def can_add_sum(self):
+    def can_naturally_gen_sum(self):
         """
-        当前是否能添加阳光, 在添加阳光前请务必调用此方法
+        当前能否自然生成阳光
         """
         # 统计未被收集的阳光数
         count = 0

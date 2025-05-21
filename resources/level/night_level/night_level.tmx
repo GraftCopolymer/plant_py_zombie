@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="44" height="19" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="75">
+ <imagelayer id="5" name="Background">
+  <image source="night_level.jpg" width="1400" height="600"/>
+ </imagelayer>
+ <objectgroup id="4" name="Plantable">
+  <properties>
+   <property name="columns" type="int" value="9"/>
+   <property name="rows" type="int" value="5"/>
+  </properties>
+  <object id="13" x="256" y="181" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="0"/>
+    <property name="row" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="70" x="256" y="86" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="0"/>
+    <property name="row" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="22" x="336" y="181" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="1"/>
+    <property name="row" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="69" x="336" y="86" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="1"/>
+    <property name="row" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="27" x="416" y="181" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="2"/>
+    <property name="row" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="68" x="416" y="86" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="2"/>
+    <property name="row" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="32" x="496" y="181" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="3"/>
+    <property name="row" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="67" x="496" y="86" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="3"/>
+    <property name="row" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="37" x="576" y="181" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="4"/>
+    <property name="row" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="66" x="576" y="86" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="4"/>
+    <property name="row" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="42" x="656" y="181" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="5"/>
+    <property name="row" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="65" x="656" y="86" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="5"/>
+    <property name="row" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="47" x="736" y="181" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="6"/>
+    <property name="row" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="64" x="736" y="86" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="6"/>
+    <property name="row" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="52" x="816" y="181" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="7"/>
+    <property name="row" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="63" x="816" y="86" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="7"/>
+    <property name="row" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="57" x="896" y="181" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="8"/>
+    <property name="row" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="62" x="896" y="86" width="80" height="95">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="8"/>
+    <property name="row" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="17" x="256" y="276" width="80" height="107">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="0"/>
+    <property name="row" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="21" x="336" y="276" width="80" height="107">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="1"/>
+    <property name="row" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="26" x="416" y="276" width="80" height="107">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="2"/>
+    <property name="row" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="31" x="496" y="276" width="80" height="107">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="3"/>
+    <property name="row" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="36" x="576" y="276" width="80" height="107">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="4"/>
+    <property name="row" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="41" x="656" y="276" width="80" height="107">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="5"/>
+    <property name="row" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="46" x="736" y="276" width="80" height="107">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="6"/>
+    <property name="row" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="51" x="816" y="276" width="80" height="107">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="7"/>
+    <property name="row" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="56" x="896" y="276" width="80" height="107">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="8"/>
+    <property name="row" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="16" x="256" y="383" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="0"/>
+    <property name="row" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="20" x="336" y="383" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="1"/>
+    <property name="row" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="25" x="416" y="383" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="2"/>
+    <property name="row" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="30" x="496" y="383" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="3"/>
+    <property name="row" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="35" x="576" y="383" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="4"/>
+    <property name="row" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="40" x="656" y="383" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="5"/>
+    <property name="row" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="45" x="736" y="383" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="6"/>
+    <property name="row" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="50" x="816" y="383" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="7"/>
+    <property name="row" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="55" x="896" y="383" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="8"/>
+    <property name="row" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="18" x="256" y="473" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="0"/>
+    <property name="row" type="int" value="4"/>
+   </properties>
+  </object>
+  <object id="19" x="336" y="473" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="1"/>
+    <property name="row" type="int" value="4"/>
+   </properties>
+  </object>
+  <object id="24" x="416" y="473" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="2"/>
+    <property name="row" type="int" value="4"/>
+   </properties>
+  </object>
+  <object id="29" x="496" y="473" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="3"/>
+    <property name="row" type="int" value="4"/>
+   </properties>
+  </object>
+  <object id="34" x="576" y="473" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="4"/>
+    <property name="row" type="int" value="4"/>
+   </properties>
+  </object>
+  <object id="39" x="656" y="473" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="5"/>
+    <property name="row" type="int" value="4"/>
+   </properties>
+  </object>
+  <object id="44" x="736" y="473" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="6"/>
+    <property name="row" type="int" value="4"/>
+   </properties>
+  </object>
+  <object id="49" x="816" y="473" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="7"/>
+    <property name="row" type="int" value="4"/>
+   </properties>
+  </object>
+  <object id="54" x="896" y="473" width="80" height="90">
+   <properties>
+    <property name="cell_type" value="grass"/>
+    <property name="column" type="int" value="8"/>
+    <property name="row" type="int" value="4"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>
