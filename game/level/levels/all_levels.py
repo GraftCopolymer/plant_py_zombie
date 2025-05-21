@@ -2,7 +2,7 @@ from game.level.level_creator import LevelCreator
 from game.level.level_scene import LevelScene
 
 
-@LevelCreator.register_level('first_level')
+@LevelCreator.register_level('first_day')
 class FirstDayLevel(LevelScene):
     """
     第一关，没什么特别的

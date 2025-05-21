@@ -21,7 +21,7 @@ class LevelCreator:
     @staticmethod
     def create_level(name: str) -> 'LevelScene':
         if name not in LevelCreator.level_registries:
-            raise Exception('No such level!')
+            raise Exception(f'No such level: {name}')
         return LevelCreator.level_registries[name]()
 
     @staticmethod
