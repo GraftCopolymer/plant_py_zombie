@@ -387,6 +387,8 @@ class BucketheadZombie(ConfigZombie):
                 target = attack_targets[-1]
                 target.hurt(self, self.damage)
                 self.attack_timer = 0
+            if self.hurt_state:
+                self.hit_flash(dt)
         else:
             super().handle_state(dt)
 
