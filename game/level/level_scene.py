@@ -295,7 +295,7 @@ class LevelScene(AbstractScene):
         更新僵尸波次调度器
         """
         if self.level_state.current_state.name != 'progress': return
-        zombie: Optional[AbstractZombie] = self.zombie_scheduler.update_and_gen(dt / 1000)
+        zombie: Optional[AbstractZombie] = self.zombie_scheduler.update_and_gen(dt)
         if zombie is not None:
             self.add_zombie_from_start(zombie, random.randint(0, self.max_row - 1))
 

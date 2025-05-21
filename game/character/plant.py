@@ -44,7 +44,7 @@ class AbstractPlant(GameSprite, abc.ABC):
     plant_cold_down = 0
 
     def __init__(self, max_health: float, *args, **kwargs):
-        super().__init__([], None, z=LAYERS['plant0'])
+        super().__init__([], None, z=LAYERS['plant1'])
         self.cell: Union[AbstractPlantCell, None] = None
         # 最大生命值
         self.max_health = max_health

@@ -9,16 +9,16 @@ from game.level.zombie_creator import ZombieCreator
 
 class ZombieWaveScheduler:
     """
-    僵尸波次调度器, 调度器中的时间单位均为s，使用时请注意转换
+    僵尸波次调度器, 调度器中的时间单位均为ms
     """
     def __init__(self, config_path: str):
         with open(config_path, 'r', encoding='utf-8') as f:
             self.config = json.load(f)
 
         self.waves = self.config["waves"]
-        self.duration = self.config.get("duration", 180)
+        self.duration = self.config.get("duration", 180000)
         self.max_concurrent = self.config.get("max_concurrent_zombies", 10)
-        self.default_interval = self.config.get("default_spawn_interval", 3)
+        self.default_interval = self.config.get("default_spawn_interval", 3000)
 
         self.timer = 0
         self.current_wave_index = 0
