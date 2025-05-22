@@ -11,7 +11,10 @@ if TYPE_CHECKING:
 
 class Shovel(GameSprite):
     def __init__(self, group: Union[pygame.sprite.Group, list]):
-        super().__init__(group, pygame.image.load('resources/ui/shovel_tool/shovel.png'))
+        image = pygame.image.load('resources/ui/shovel_tool/shovel.png')
+        # 缩放铲子图像
+        image = pygame.transform.scale(image, (image.width * 0.8, image.height * 0.8))
+        super().__init__(group, image)
 
     def update(self, dt: float) -> None:
         pass
