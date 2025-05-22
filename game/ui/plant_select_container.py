@@ -41,7 +41,7 @@ class PlantSelectContainer(UIWidget):
         """
         self.view_size = Vector2(self.size.x, 0)
         if len(self.card_list) == 0:
-            print('警告: 卡片列表为空，停止布局')
+            # print('警告: 卡片列表为空，停止布局')
             return
         row_size_recorder: int = 0
         row_count: int = 0

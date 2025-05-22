@@ -74,8 +74,6 @@ class Game:
         ResourceLoader().load_zombie(Game.zombie_path)
         # 加载所有子弹
         ResourceLoader().load_bullet(Game.bullet_path)
-        # 加载所有粒子效果
-        ResourceLoader().load_particles(Game.particle_path)
         # 加载所有动画
         ResourceLoader().load_plant_animation(Game.plant_animation_path)
         # 加载UI主题

@@ -280,8 +280,8 @@ class LevelScene(AbstractScene):
         super().update(dt)
         # 检查游戏状态(进行中、胜利、失败)
         self.check_level_result()
-        # 游戏已结束，不再更新level, 但仍更新对话框, 否则用户看不到对话框弹出
         self.flow.update(dt)
+        # 游戏已结束，不再更新level, 但仍更新对话框, 否则用户看不到对话框弹出
         self.result_dialog.update(dt)
         if self.level_state.get_state() == 'win' or self.level_state.get_state() =='fail': return
         # 更新阳光生成计时器
@@ -533,8 +533,8 @@ class LevelScene(AbstractScene):
 
     def _on_plant(self, event: StartPlantEvent) -> None:
         if not self.interaction_state.can_planting(): return
-        print("通知网格进入种植状态")
-        print(f'收到事件的场景名称: {self.name}')
+        # print("通知网格进入种植状态")
+        # print(f'收到事件的场景名称: {self.name}')
         # 进入种植状态
         self.interaction_state.start_planting(event.plant)
         self.grid.start_selecting()
@@ -543,7 +543,7 @@ class LevelScene(AbstractScene):
 
     def _on_shoveling(self, event: 'StartShovelingEvent'):
         if not self.interaction_state.can_shoveling(): return
-        print("进入铲植物状态")
+        # print("进入铲植物状态")
         self.interaction_state.start_shoveling()
         self.grid.start_selecting()
         self.interaction_state.setup_preview(self.camera, get_mouse_world_pos(self.camera.world_pos) - Vector2(0, self.interaction_state.preview_sprite.rect.height))
@@ -591,6 +591,7 @@ class LevelScene(AbstractScene):
             self.result_dialog.show('fail')
 
     def _on_start_fight(self, event: ButtonClickEvent):
+        if not self.plant_select_container.visible: return
         if '#start_fight_button' in event.ui_element.object_ids:
             print("开始战斗")
             # 恢复关卡流执行
