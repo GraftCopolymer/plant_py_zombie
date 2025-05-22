@@ -421,6 +421,11 @@ class SunShroom(GrassPlant, StatefulPlant, TimingAction):
 
     def update(self, dt: float) -> None:
         super().update(dt)
+        if not hasattr(self.level, 'is_night') and self.get_state_machine().can_transition_to('sleep'):
+            # 白天直接睡觉
+            self.get_state_machine().transition_to('sleep')
+            self.animation.change_state(self.get_state_machine().get_state())
+
         self.sun_produce_timer += dt
         if self.sun_produce_timer >= self.sun_produce_interval:
             self.sun_produce_timer = 0
@@ -439,6 +444,9 @@ class SunShroom(GrassPlant, StatefulPlant, TimingAction):
         """
         self.state_machine.transition_to('big_idle')
         self.animation.change_state(self.state_machine.get_state())
+
+    def is_sleeping(self):
+        return self.get_state_machine().get_state() == 'sleep'
 
     def get_state_machine(self) -> AbstractPlantStateMachine:
         return self.state_machine
@@ -461,6 +469,9 @@ class SunShroom(GrassPlant, StatefulPlant, TimingAction):
             sun_value = 15
         elif self.state_machine.get_state() == 'big_idle':
             sun_value = 25
+        else:
+            # 其他状态直接退出阳光生成
+            return
         from game.level.sun import Sun
         spawn_pos = self.world_pos.copy()
         # 在距离生成处的位置随机生成一个任意方向的变量作为阳光的目的地

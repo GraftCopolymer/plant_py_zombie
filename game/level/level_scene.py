@@ -522,6 +522,7 @@ class LevelScene(AbstractScene):
     def detach_scene(self):
         # 单独结束对话框的事件
         self.result_dialog.unmount()
+        super().detach_scene()
 
     def process_ui_event(self, event) -> None:
         super().process_ui_event(event)

@@ -4,15 +4,19 @@
     "small_idle": [
       {
         "type": "gif",
-        "frames": "./SunShroom2.gif",
-        "frames_count": 8
+        "frames": "./SunShroom2.gif"
       }
     ],
     "big_idle": [
       {
         "type": "gif",
-        "frames": "./SunShroom.gif",
-        "frames_count": 8
+        "frames": "./SunShroom.gif"
+      }
+    ],
+    "sleep": [
+      {
+        "type": "gif",
+        "frames": "./SunShroomSleep.gif"
       }
     ]
   }
