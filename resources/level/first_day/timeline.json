@@ -12,8 +12,8 @@
           "frequency": 5
         },
         {
-          "type": "buckethead_zombie",
-          "frequency": 5
+          "type": "conehead_zombie",
+          "frequency": 1
         }
       ]
     },
@@ -26,8 +26,8 @@
           "frequency": 4
         },
         {
-          "type": "buckethead_zombie",
-          "frequency": 1
+          "type": "conehead_zombie",
+          "frequency": 2
         }
       ]
     },
@@ -36,12 +36,12 @@
       "spawn_interval": 10000,
       "zombies": [
         {
-          "type": "buckethead_zombie",
-          "frequency": 1
+          "type": "conehead_zombie",
+          "frequency": 4
         },
         {
           "type": "normal_zombie",
-          "frequency": 8
+          "frequency": 2
         }
       ]
     },
@@ -52,11 +52,11 @@
       "zombies": [
         {
           "type": "normal_zombie",
-          "frequency": 3
+          "frequency": 1
         },
         {
-          "type": "buckethead_zombie",
-          "frequency": 3
+          "type": "conehead_zombie",
+          "frequency": 2
         }
       ]
     }

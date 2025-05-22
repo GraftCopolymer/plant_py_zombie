@@ -5,7 +5,7 @@
   "waves": [
     {
       "time": 0,
-      "spawn_interval": 0,
+      "spawn_interval": 5000,
       "zombies": [
         {
           "type": "normal_zombie",
@@ -13,7 +13,7 @@
         },
         {
           "type": "conehead_zombie",
-          "frequency": 10
+          "frequency": 1
         }
       ]
     },
@@ -23,7 +23,11 @@
       "zombies": [
         {
           "type": "normal_zombie",
-          "frequency": 4
+          "frequency": 5
+        },
+        {
+          "type": "conehead_zombie",
+          "frequency": 1
         },
         {
           "type": "buckethead_zombie",
@@ -33,29 +37,33 @@
     },
     {
       "time": 60000,
-      "spawn_interval": 10000,
+      "spawn_interval": 12000,
       "zombies": [
         {
           "type": "buckethead_zombie",
-          "frequency": 1
+          "frequency": 5
         },
         {
           "type": "normal_zombie",
-          "frequency": 8
+          "frequency": 1
         }
       ]
     },
     {
       "time": 120000,
-      "spawn_interval": 0,
+      "spawn_interval": 450,
       "warning": "A huge wave is coming!",
       "zombies": [
         {
           "type": "normal_zombie",
-          "frequency": 3
+          "frequency": 7
         },
         {
           "type": "buckethead_zombie",
+          "frequency": 2
+        },
+        {
+          "type": "conehead_zombie",
           "frequency": 3
         }
       ]
