@@ -13,7 +13,7 @@
         },
         {
           "type": "buckethead_zombie",
-          "frequency": 10
+          "frequency": 5
         }
       ]
     },
@@ -47,7 +47,7 @@
     },
     {
       "time": 120000,
-      "spawn_interval": 0,
+      "spawn_interval": 300,
       "warning": "A huge wave is coming!",
       "zombies": [
         {

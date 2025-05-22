@@ -169,6 +169,8 @@ class LevelScene(AbstractScene):
         self.camera.move_to(self.camera_init_pos)
         # 僵尸生成线位置（仅x坐标有效）
         self.zombie_gen_pos = Vector2(400, 0)
+        # 僵尸胜利线位置, 当有僵尸到达此位置后, 游戏将失败(仅x坐标有效)
+        self.zombie_win_line = Vector2(-10, 0)
         # 关卡状态
         self.level_state = LevelStateMachine()
         # 关卡交互状态
@@ -244,10 +246,6 @@ class LevelScene(AbstractScene):
             # 暂停执行流，等待关卡结果(失败或胜利)
             self.flow.pause()
 
-        def _show_result_dialog():
-            yield
-
-
         self.flow.add_part(FlowPart(_show_text))
         self.flow.add_part(FlowPart(_check_zombie))
         self.flow.add_part(FlowPart(_show_plant_selector))
@@ -279,8 +277,13 @@ class LevelScene(AbstractScene):
         self.ui_manager.draw_ui(screen)
 
     def update(self, dt: float):
-        self.flow.update(dt)
         super().update(dt)
+        # 检查游戏状态(进行中、胜利、失败)
+        self.check_level_result()
+        # 游戏已结束，不再更新level, 但仍更新对话框, 否则用户看不到对话框弹出
+        self.flow.update(dt)
+        self.result_dialog.update(dt)
+        if self.level_state.get_state() == 'win' or self.level_state.get_state() =='fail': return
         # 更新阳光生成计时器
         if self.can_naturally_gen_sum():
             self.sun_gen_timer += dt
@@ -302,7 +305,6 @@ class LevelScene(AbstractScene):
         self.plant_select_container.update(dt)
         self.in_game_selector.update(dt)
         self.shovel_slot.update(dt)
-        self.result_dialog.update(dt)
         self.ui_manager.update(dt)
 
     def update_zombie_scheduler(self, dt: float):
@@ -378,6 +380,26 @@ class LevelScene(AbstractScene):
         if sun not in self.suns: return
         self.remove(sun)
         self.suns.remove(sun)
+
+    def check_level_result(self):
+        """
+        检测游戏是否结束, 并根据游戏结果更新状态
+        """
+        # 检测游戏是否已胜利
+        if self.zombie_scheduler.get_progress() >= 1 and len(self.zombies) == 0 and self.level_state.can_transition_to('win'):
+            self.level_state.transition_to('win')
+            # 添加胜利流并执行
+            self.flow.add_part(FlowPart(self._flow_win))
+            self.flow.resume()
+        elif self.level_state.can_transition_to('fail'):
+            # 检测是否有僵尸到达僵尸胜利线
+            for z in self.zombies:
+                if z.world_pos.x <= self.zombie_win_line.x:
+                    self.level_state.transition_to('fail')
+                    # 添加失败流并执行
+                    self.flow.add_part(FlowPart(self._flow_fail))
+                    self.flow.resume()
+                    break
 
     def can_naturally_gen_sum(self):
         """
@@ -575,4 +597,17 @@ class LevelScene(AbstractScene):
             from base.game_event import EventBus, StartFightEvent
             # 发布关卡开始事件
             EventBus().publish(StartFightEvent())
+
+    def _flow_win(self):
+        """
+        游戏胜利将执行的流
+        """
+        yield
+        self.result_dialog.show('win')
+    def _flow_fail(self):
+        """
+        游戏失败将执行的流
+        """
+        yield
+        self.result_dialog.show('fail')
 
