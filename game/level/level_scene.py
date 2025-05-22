@@ -405,6 +405,8 @@ class LevelScene(AbstractScene):
         """
         当前能否自然生成阳光
         """
+        # 关卡未开始时不能产生阳光
+        if self.level_state.get_state() != 'progress': return 
         # 统计未被收集的阳光数
         count = 0
         for sun in self.suns:
