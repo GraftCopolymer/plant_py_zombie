@@ -337,13 +337,14 @@ class OncePlayController(AnimatePlayController):
         AnimatePlayController.__init__(self, frames, init_frame)
         # 是否已经播放完毕
         self.over = False
+        print(f'总帧数: {self.frames}')
 
     def next_frame(self) -> int:
         frame = self.current_frame
-        if not self.over:
-            self.current_frame += 1
         if self.current_frame == self.frames - 1:
             self.over = True
+        if not self.over:
+            self.current_frame += 1
         return frame
 
     def reset(self) -> None:
