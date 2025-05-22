@@ -107,9 +107,8 @@ class UIWidget(abc.ABC):
     def layout(self) -> None:
         pass
 
-    @abstractmethod
     def update(self, dt: float) -> None:
-        pass
+        self.ui_manager.update(dt)
 
     def draw(self, surface: Surface) -> None:
         if not self.visible:

@@ -25,6 +25,7 @@ from game.level.zombie_wave_scheduler import ZombieWaveScheduler
 from game.text.animated_text import TextAnimator
 from game.ui.in_game_plant_selector import InGamePlantSelector
 from game.ui.plant_select_container import PlantSelectContainer
+from game.ui.result_dialog import ResultDialog
 from game.ui.shovel import ShovelSlot, Shovel
 from utils.utils import create_ui_manager_with_theme, get_mouse_world_pos
 
@@ -118,11 +119,14 @@ class LevelStateMachine(StateMachine):
         self.before_start = State('before_start')
         # 进行中状态
         self.progress = State('progress')
-        # 已结束状态
-        self.end = State('end')
-        self.add_state(self.before_start, {self.progress.name, self.end.name})
-        self.add_state(self.progress, {self.end.name})
-        self.add_state(self.end)
+        # 胜利
+        self.win = State('win')
+        # 失败
+        self.fail = State('fail')
+        self.add_state(self.before_start, {'progress'})
+        self.add_state(self.progress, {'win','fail'})
+        self.add_state(self.win)
+        self.add_state(self.fail)
         self.set_initial_state('before_start')
 
 
@@ -237,6 +241,12 @@ class LevelScene(AbstractScene):
         def _start_level():
             yield from part_wait(1000)
             self.level_state.transition_to('progress')
+            # 暂停执行流，等待关卡结果(失败或胜利)
+            self.flow.pause()
+
+        def _show_result_dialog():
+            yield
+
 
         self.flow.add_part(FlowPart(_show_text))
         self.flow.add_part(FlowPart(_check_zombie))
@@ -253,14 +263,18 @@ class LevelScene(AbstractScene):
         self.in_game_selector = InGamePlantSelector([])
         # 铲子插槽
         self.shovel_slot = ShovelSlot()
+        # 游戏结算对话框
+        self.result_dialog = ResultDialog(self)
         self.in_game_selector.visible = False
         self.plant_select_container.visible = False
+        self.result_dialog.visible = False
 
     def draw(self, screen: Surface, bgsurf=None, special_flags=0) -> None:
         self.camera.draw(screen, bgsurf, special_flags)
         self.plant_select_container.draw(screen)
         self.in_game_selector.draw(screen)
         self.shovel_slot.draw(screen)
+        self.result_dialog.draw(screen)
         # UI需最后绘制以显示在所有内容之上
         self.ui_manager.draw_ui(screen)
 
@@ -288,6 +302,7 @@ class LevelScene(AbstractScene):
         self.plant_select_container.update(dt)
         self.in_game_selector.update(dt)
         self.shovel_slot.update(dt)
+        self.result_dialog.update(dt)
         self.ui_manager.update(dt)
 
     def update_zombie_scheduler(self, dt: float):
@@ -430,10 +445,23 @@ class LevelScene(AbstractScene):
                 'top': 'top'
             }
         )
+        show_win_dialog_button_rect = pygame.Rect(0, 0, 100, 60)
+        show_win_dialog_button_rect.topright = (0, 70)
+        pygame_gui.elements.UIButton(
+            relative_rect=show_win_dialog_button_rect,
+            text='显示胜利对话框',
+            manager=self.ui_manager,
+            object_id="#show_win_dialog_button",
+            anchors={
+                'right': 'right',
+                'top': 'top'
+            }
+        )
         # 这俩的setup方法中有事件订阅, 需要在detach_scene中调用destroy方法取消订阅
         self.plant_select_container.setup()
         self.in_game_selector.setup()
         self.shovel_slot.setup(self)
+        self.result_dialog.setup()
 
     def setup_scene(self, manager: SceneManager) -> None:
         super().setup_scene(manager)
@@ -445,7 +473,7 @@ class LevelScene(AbstractScene):
         EventBus().subscribe(StartPlantEvent, self._on_plant)
         EventBus().subscribe(MouseMotionEvent, self._on_mouse_move)
         EventBus().subscribe(StopPlantEvent, self._on_stop_planting)
-        EventBus().subscribe(ButtonClickEvent, self._on_pop_level)
+        EventBus().subscribe(ButtonClickEvent, self._on_button_clicked)
         EventBus().subscribe(ButtonClickEvent, self._on_start_fight)
         EventBus().subscribe(StartShovelingEvent, self._on_shoveling)
         EventBus().subscribe(EndShovelingEvent, self._on_stop_shoveling)
@@ -455,7 +483,7 @@ class LevelScene(AbstractScene):
         EventBus().unsubscribe(StartPlantEvent, self._on_plant)
         EventBus().unsubscribe(MouseMotionEvent, self._on_mouse_move)
         EventBus().unsubscribe(StopPlantEvent, self._on_stop_planting)
-        EventBus().unsubscribe(ButtonClickEvent, self._on_pop_level)
+        EventBus().unsubscribe(ButtonClickEvent, self._on_button_clicked)
         EventBus().unsubscribe(ButtonClickEvent, self._on_start_fight)
         EventBus().unsubscribe(StartShovelingEvent, self._on_shoveling)
         EventBus().unsubscribe(EndShovelingEvent, self._on_stop_shoveling)
@@ -469,10 +497,16 @@ class LevelScene(AbstractScene):
             for spr in lis:
                 spr.unmount()
 
+    def detach_scene(self):
+        # 单独结束对话框的事件
+        self.result_dialog.unmount()
+
     def process_ui_event(self, event) -> None:
         super().process_ui_event(event)
-        if self.plant_select_container:
+        if self.plant_select_container is not None:
             self.plant_select_container.process_event(event)
+        if self.result_dialog is not None:
+            self.result_dialog.process_event(event)
 
     def _on_plant(self, event: StartPlantEvent) -> None:
         if not self.interaction_state.can_planting(): return
@@ -527,9 +561,11 @@ class LevelScene(AbstractScene):
             self.grid.stop_planting()
             event.mark_handled()
 
-    def _on_pop_level(self, event: ButtonClickEvent):
+    def _on_button_clicked(self, event: ButtonClickEvent):
         if '#pop_level_button' in event.ui_element.object_ids:
             SceneManager().pop_scene()
+        elif '#show_win_dialog_button' in event.ui_element.object_ids:
+            self.result_dialog.show('fail')
 
     def _on_start_fight(self, event: ButtonClickEvent):
         if '#start_fight_button' in event.ui_element.object_ids:
@@ -539,3 +575,4 @@ class LevelScene(AbstractScene):
             from base.game_event import EventBus, StartFightEvent
             # 发布关卡开始事件
             EventBus().publish(StartFightEvent())
+

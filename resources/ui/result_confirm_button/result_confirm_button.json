@@ -1,0 +1,14 @@
+{
+  "#result_confirm_button": {
+    "colours": {
+      "normal_bg": "#A58F04",
+      "hovered_bg": "#978303",
+      "normal_border": "#FFFFFF00",
+      "hovered_border": "#FFFFFF00",
+      "active_bg": "#A58F04",
+      "selected_bg": "#FFFFFF00",
+      "selected_border": "#FFFFFF00",
+      "active_border": "#FFFFFF00"
+    }
+  }
+}
