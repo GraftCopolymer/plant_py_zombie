@@ -47,6 +47,14 @@
         "play_mode": "once",
         "offset": [65, 20]
       }
+    ],
+    "boom_dying": [
+      {
+        "type": "gif",
+        "frames": "./BoomDie.gif",
+        "play_mode": "once",
+        "offset": [65, 20]
+      }
     ]
   },
   "init_state": "idle"

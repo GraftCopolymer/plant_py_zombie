@@ -1,0 +1,22 @@
+{
+  "id": "cherry_bomb_animation",
+  "animations": {
+    "ready_to_bomb": [
+      {
+        "type": "gif",
+        "frames": "./ReadyToBomb.gif",
+        "interval": 110,
+        "play_mode": "once"
+      }
+    ],
+    "boomed": [
+      {
+        "type": "gif",
+        "frames": "./Boomed.gif",
+        "interval": 80,
+        "play_mode": "once",
+        "offset": [60, 40]
+      }
+    ]
+  }
+}

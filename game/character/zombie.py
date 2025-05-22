@@ -191,8 +191,20 @@ class GenericZombie(AbstractZombie):
         self.animation.change_state(self.get_state())
 
     def dying(self):
+        """
+        正常死亡动画
+        """
         self.state_machine.transition_to('dying')
         self.animation.change_state(self.get_state())
+
+    def boom_dying(self):
+        """
+        被炸死的死亡动画
+        """
+        # 由于该方法多为外部调用，所以需要检测是否能切换到boom_dying状态
+        if self.state_machine.can_transition_to('boom_dying'):
+            self.state_machine.transition_to('boom_dying')
+            self.animation.change_state(self.state_machine.get_state())
 
     def fading(self, dt: float):
         alpha = int(255 * max(1 - self.fading_timer / self.died_fading_time, 0))
@@ -254,6 +266,8 @@ class GenericZombie(AbstractZombie):
                     collide_plant.append(obj)
         if only_same_row:
             collide_plant = [cp for cp in collide_plant if cp.cell.row == self.row]
+        # 仅保留当前能被吃的植物
+        collide_plant = [cp for cp in collide_plant if cp.can_be_eaten()]
 
         # 根据植物的 z 排序(涉及到南瓜头对其他植物的保护作用)
         def sort_by_z(p1: AbstractPlant):
@@ -278,7 +292,7 @@ class GenericZombie(AbstractZombie):
         if self.state_machine.can_transition_to('attack') and len(plants_can_attack) > 0:
             self.attack()
         # 处理僵尸死亡事件
-        if self.get_state() == 'dying' and isinstance(controller, OncePlayController) and controller.over:
+        if self.get_state() == 'dying' or self.get_state() == 'boom_dying' and isinstance(controller, OncePlayController) and controller.over:
             # 渐隐消失
             self.fading(dt)
         if not self.is_alive() and self.state_machine.can_transition_to('dying'):

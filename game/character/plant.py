@@ -7,14 +7,16 @@ from typing import Union, TYPE_CHECKING
 import pygame.sprite
 from pygame import Surface, Vector2
 
-from base.animation import StatefulAnimation
+from base.animation import StatefulAnimation, OncePlayController
 from base.config import LAYERS
 from base.game_grid import AbstractPlantCell, GrassPlantCell, WaterPlantCell
 from base.sprite.game_sprite import GameSprite
 from game.character.bullets import Bullet
 from game.character.character_config import CharacterConfigManager
 from game.character.plant_ability import Shooter, TimingAction, StatefulPlant
-from game.character.plant_state_machine import AbstractPlantStateMachine, WallnutStateMachine, SunShroomStateMachine
+from game.character.plant_state_machine import AbstractPlantStateMachine, WallnutStateMachine, SunShroomStateMachine, \
+    CherryBombStateMachine
+from game.character.zombie import AbstractZombie
 from game.level.state_machine import StateMachine, State
 from game.level.plant_creator import PlantCreator
 
@@ -68,6 +70,7 @@ class AbstractPlant(GameSprite, abc.ABC):
     def update(self, dt: float) -> None:
         super().update(dt)
         self.animation.update(dt)
+        self.image_offset = self.animation.get_current_animation().offset
         self.image = self.animation.get_current_image()
         if self.animator is not None:
             self.animator.update(dt)
@@ -104,6 +107,12 @@ class AbstractPlant(GameSprite, abc.ABC):
             return
         self.hurt_state = True
         self.hit_flash_timer = 0
+
+    def can_be_eaten(self):
+        """
+        当前是否能被吃, 默认可以被吃，子类可以自己实现逻辑，例如地刺无法被吃
+        """
+        return True
 
     def hit_flash(self, dt: float):
         """
@@ -480,6 +489,68 @@ class SunShroom(GrassPlant, StatefulPlant, TimingAction):
         sun = Sun(self.level.camera, spawn_pos, spawn_pos + des_direct * des_distance)
         sun.value = sun_value
         sun.setup_sprite(self.level, revise=False)
+
+@PlantCreator.register_plant('cherry_bomb')
+class CherryBomb(GrassPlant, StatefulPlant):
+    """
+    樱桃炸弹，爆炸前摇取决于动画长度，动画执行完毕后爆炸
+    """
+
+    sun_cost = 150
+    plant_cold_down = 15000
+    # 爆炸伤害
+    damage = 999999
+    def __init__(self):
+        # 设置一个较大的生命值，以免在爆炸前死亡
+        super().__init__(max_health=4000)
+        self.state_machine = CherryBombStateMachine()
+
+    def update(self, dt: float) -> None:
+        super().update(dt)
+        controller = self.animation.get_current_controller()
+        if isinstance(controller, OncePlayController):
+            if self.get_state_machine().get_state() == 'boomed' and controller.over:
+                # 爆炸完毕，删除植物
+                self.level.remove_plant(self)
+            elif self.get_state_machine().can_transition_to('boomed') and controller.over:
+                # 爆炸
+                self.boom()
+        else:
+            raise ValueError('樱桃炸弹的所有动画都应该是一次性的!')
+        self.handle_state(dt)
+
+    def boom(self):
+        if self.get_state_machine().can_transition_to('boomed'):
+            self.get_state_machine().transition_to('boomed')
+            self.animation.change_state(self.get_state_machine().get_state())
+
+            # 检测附近僵尸，检测形状为AABB矩形
+            extend_rect = self.rect.copy().inflate(100, 100)
+            for z in self.level.zombies:
+                if extend_rect.colliderect(z.rect):
+                    if hasattr(z, 'boom_dying') and callable(getattr(z, 'boom_dying')):
+                        z.boom_dying()
+
+    def load_animation(self, *args, **kwargs) -> StatefulAnimation:
+        config = CharacterConfigManager().get_animation_config('cherry_bomb_animation')
+        return StatefulAnimation(config.get_random_animation_group(), config.init_state)
+
+    def can_be_eaten(self):
+        if self.get_state_machine().get_state() == 'boomed':
+            return False
+        return True
+
+    def get_state_machine(self) -> AbstractPlantStateMachine:
+        return self.state_machine
+
+    def handle_state(self, *args, **kwargs) -> None:
+        pass
+
+    def hurt(self, source, damage: float) -> None:
+        # 爆炸后不再受伤害
+        if self.get_state_machine().get_state() == 'boomed':
+            return
+        super().hurt(source, damage)
 
 
 class PlantAnimator(abc.ABC):

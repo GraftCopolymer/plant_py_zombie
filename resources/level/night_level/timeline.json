@@ -5,7 +5,7 @@
   "waves": [
     {
       "time": 0,
-      "spawn_interval": 8000,
+      "spawn_interval": 0,
       "zombies": [
         {
           "type": "normal_zombie",

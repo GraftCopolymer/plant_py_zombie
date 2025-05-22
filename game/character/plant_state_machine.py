@@ -40,3 +40,12 @@ class SunShroomStateMachine(AbstractPlantStateMachine):
         self.add_state(self.big_idle, {'sleep'})
         self.add_state(self.sleep)
         self.set_initial_state('small_idle')
+
+class CherryBombStateMachine(AbstractPlantStateMachine):
+    def __init__(self):
+        super().__init__()
+        self.ready_to_boom = State('ready_to_boom')
+        self.boomed = State('boomed')
+        self.add_state(self.ready_to_boom, {'boomed'})
+        self.add_state(self.boomed)
+        self.set_initial_state('ready_to_boom')

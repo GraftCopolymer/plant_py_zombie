@@ -7,6 +7,10 @@ from game.character.plant_state_machine import AbstractPlantStateMachine
 if TYPE_CHECKING:
     from game.character.bullets import Bullet
 
+"""
+本文件的所有class视为接口使用
+"""
+
 
 class Shooter(abc.ABC):
     """
@@ -23,7 +27,7 @@ class Shooter(abc.ABC):
 
 class Boomer(abc.ABC):
     """
-    贴近时爆炸
+    定时爆炸
     """
     @abstractmethod
     def boom(self) -> None: pass
