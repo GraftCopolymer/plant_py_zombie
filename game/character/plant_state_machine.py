@@ -49,3 +49,12 @@ class CherryBombStateMachine(AbstractPlantStateMachine):
         self.add_state(self.ready_to_boom, {'boomed'})
         self.add_state(self.boomed)
         self.set_initial_state('ready_to_boom')
+
+class JalapenoStateMachine(AbstractPlantStateMachine):
+    def __init__(self):
+        super().__init__()
+        self.ready_to_fire = State('ready_to_fire')
+        self.fired = State('fired')
+        self.add_state(self.ready_to_fire, {'fired'})
+        self.add_state(self.fired)
+        self.set_initial_state('ready_to_fire')

@@ -6,6 +6,7 @@ from typing import Union, TYPE_CHECKING
 import pygame
 from pygame import Surface, Vector2
 
+from base.animation import StatefulAnimation, OncePlayController
 from base.resource_loader import ResourceLoader
 from base.sprite.game_sprite import GameSprite
 from game.character.zombie import AbstractZombie
@@ -18,9 +19,8 @@ if TYPE_CHECKING:
 
 class Bullet(GameSprite, abc.ABC):
     """
-    植物子弹弹幕
+    植物弹幕
     """
-
     def __init__(self, image: pygame.Surface):
         super().__init__([], image)
         self.owner: Union['AbstractPlant', None] = None
@@ -58,6 +58,23 @@ class Bullet(GameSprite, abc.ABC):
     @abstractmethod
     def hit_zombie(self, zombie: AbstractZombie) -> None: pass
 
+class AnimatedBullet(Bullet, abc.ABC):
+    def __init__(self):
+        self.animation = self.load_animation()
+        super().__init__(self.animation.get_current_image())
+
+    @abstractmethod
+    def load_animation(self) -> StatefulAnimation:
+        """
+        加载弹幕动画
+        """
+        pass
+
+    def update(self, dt: float) -> None:
+        super().update(dt)
+        # 更新动画
+        self.animation.update(dt)
+        self.image = self.animation.get_current_image()
 
 class StraightForwardBullet(Bullet, abc.ABC):
     """
@@ -137,3 +154,49 @@ class IcedPeaBullet(StraightForwardBullet):
         super().hit_zombie(zombie)
         zombie.set_iced_remain_time(self.iced_time)
         zombie.set_speed_factor(0.6)
+
+
+class JalapenoFire(AnimatedBullet):
+    """
+    火爆辣椒的火焰
+    """
+    fire_offset = Vector2(0, -35)
+    def __init__(self):
+        super().__init__()
+        # 是否已经烫了一次僵尸
+        self.fired = False
+
+    def load_animation(self) -> StatefulAnimation:
+        config = ResourceLoader().get_bullet_animation('jalapeno_fire_animation')
+        return StatefulAnimation(config.get_random_animation_group(), config.init_state)
+
+    def update(self, dt: float) -> None:
+        super().update(dt)
+        controller = self.animation.get_current_controller()
+        if not self.fired:
+            # 获取当前行的所有僵尸并烧死
+            for z in self.level.zombies:
+                if z.row == self.owner.cell.row:
+                    self.hit_zombie(z)
+            self.fired = True
+        if isinstance(controller, OncePlayController) and controller.over:
+            self.level.remove_bullet(self)
+
+    def setup_sprite(self, group: pygame.sprite.Group, owner, level: 'LevelScene'):
+        super().setup_sprite(group, owner, level)
+        # 获取当前owner所在行的最左边的单元格的坐标
+        row_num = self.owner.cell.row
+        cells = self.level.grid.get_row_of(row_num)
+        gen_pos = self.owner.world_pos
+        if len(cells) > 0:
+            first = cells[0]
+            gen_pos = first.position + self.fire_offset
+        self.set_position(gen_pos)
+
+
+    def hit_zombie(self, zombie: AbstractZombie) -> None:
+        """
+        杀死僵尸
+        """
+        if hasattr(zombie, 'boom_dying') and callable(getattr(zombie, 'boom_dying')):
+            zombie.boom_dying()

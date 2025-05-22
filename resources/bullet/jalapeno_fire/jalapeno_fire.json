@@ -1,0 +1,12 @@
+{
+  "id": "jalapeno_fire_animation",
+  "animations": {
+    "": [
+      {
+        "type": "gif",
+        "frames": "jalapeno_fire.gif",
+        "play_mode": "once"
+      }
+    ]
+  }
+}

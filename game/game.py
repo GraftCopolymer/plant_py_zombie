@@ -8,7 +8,7 @@ from base.game_event import EventBus, ButtonClickEvent, StartPlantEvent, WillGen
 from base.resource_loader import ResourceLoader
 from base.scene import SceneManager
 from base.sprite.game_sprite import GameSprite
-from game.character.character_config import CharacterConfigManager
+from game.character.character_config import ConfigManager
 from game.character.plant import PeaShooter, MachineGunShooter, IcedPeaShooter
 from game.character.zombie import ConfigZombie
 from game.character.zombie_state_machine import ZombieStateMachine
@@ -30,7 +30,7 @@ def on_start_plant_iced_pea_shooter(event: ButtonClickEvent):
 def on_gen_zombie(event: ButtonClickEvent):
     if '#zombie_gen_button' in event.ui_element.object_ids:
         for _ in range(1):
-            zombie = ConfigZombie(CharacterConfigManager().get_zombie_config('normal_zombie'), ZombieStateMachine(),[])
+            zombie = ConfigZombie(ConfigManager().get_zombie_config('normal_zombie'), ZombieStateMachine(), [])
             position = pygame.Vector2(1000, random.randint(50, Game.screen_size[1] - 50))
             zombie.set_position(position)
             zombie.walk()

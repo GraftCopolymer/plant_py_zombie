@@ -5,7 +5,8 @@ import pygame.image
 from pygame import Surface
 from pygame_gui import UIManager
 
-from game.character.character_config import CharacterConfigManager
+from base.animation import StatefulAnimation
+from game.character.character_config import ConfigManager, AnimationConfig
 
 
 class ResourceLoader:
@@ -15,6 +16,7 @@ class ResourceLoader:
     _instance = None
     _lock = threading.Lock()
     _bullets: dict[str, Surface] = {}
+    _animated_bullets: dict[str, AnimationConfig] = {}
     _particles: dict[str, Surface] = {}
     _themes: list[str] = []
 
@@ -41,18 +43,34 @@ class ResourceLoader:
             if not os.path.isfile(json_path):
                 continue  # 跳过不包含对应文件夹名称的json文件的文件夹
 
-            CharacterConfigManager().load('zombie', json_path)
+            ConfigManager().load('zombie', json_path)
 
     def load_bullet(self, bullet_path: str):
-        """
-        加载所有子弹
-        """
         for bullet_dir in os.listdir(bullet_path):
             b_d = os.path.join(bullet_path, bullet_dir)
             if not os.path.isdir(b_d): continue
-            images = os.listdir(b_d)
-            # 加载遇到的第一张图
-            self._bullets[bullet_dir] = pygame.image.load(os.path.join(b_d, images[0])).convert_alpha()
+            files = os.listdir(b_d)
+            if f'{bullet_dir}.json' in files:
+                # 有配置文件则根据配置文件加载动画
+                self._load_bullet_animation(os.path.join(b_d, f'{bullet_dir}.json'))
+            # 无配置文件，直接加载图片
+            elif f'{bullet_dir}.png' in files:
+                self._load_bullet_image(bullet_dir, os.path.join(b_d, f'{bullet_dir}.png'))
+            elif f'{bullet_dir}.jpg' in files:
+                self._load_bullet_image(bullet_dir, os.path.join(b_d, f'{bullet_dir}.jpg'))
+
+    def _load_bullet_image(self, name: str, image_path: str):
+        """
+        加载所有子弹
+        """
+        self._bullets[name] = pygame.image.load(image_path).convert_alpha()
+
+    def _load_bullet_animation(self, json_path: str):
+        """
+        加载子弹动画
+        """
+        config = AnimationConfig(json_path)
+        self._animated_bullets[config.config_id] = config
 
     def load_particles(self, particle_path: str):
         """
@@ -78,7 +96,7 @@ class ResourceLoader:
             if not os.path.isfile(json_path):
                 continue  # 跳过不包含对应文件夹名称的json文件的文件夹
 
-            CharacterConfigManager().load('animation', json_path)
+            ConfigManager().load('animation', json_path)
 
     def load_theme_to_manager(self, theme_path: str, ui_manager: UIManager) -> None:
         # 加载全局主题文件
@@ -102,6 +120,9 @@ class ResourceLoader:
 
     def get_bullet_image(self, bullet_name: str) -> Surface:
         return self._bullets[bullet_name]
+
+    def get_bullet_animation(self, config_id: str) -> AnimationConfig:
+        return self._animated_bullets[config_id]
 
     def load_plant(self) -> None:
         """

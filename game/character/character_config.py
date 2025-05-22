@@ -12,7 +12,7 @@ import pygame
 from base.animation import Animation, AnimationLoader
 
 ConfigType = Literal['zombie', 'animation']
-class CharacterConfigManager:
+class ConfigManager:
     """
     配置文件管理器，单例，任何配置文件都需要从该管理器读取
     内部实现了一些防止重复加载配置的逻辑
@@ -20,7 +20,7 @@ class CharacterConfigManager:
     _instance = None
     _lock = threading.Lock()
     # 配置id到配置对象的映射
-    _configs: dict[str, CharacterConfig] = {}
+    _configs: dict[str, GameSpriteConfig] = {}
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             with cls._lock:
@@ -28,7 +28,7 @@ class CharacterConfigManager:
                     cls._instance = super().__new__(cls)
         return cls._instance
 
-    def get_config(self, config_id: str) -> CharacterConfig:
+    def get_config(self, config_id: str) -> GameSpriteConfig:
         """
         在调用该方法前请确保配置文件已经被加载
         :param config_id: 配置id
@@ -59,7 +59,7 @@ class CharacterConfigManager:
         :param path:
         :return:
         """
-        config = CharacterConfig.load_config(path, config_type)
+        config = GameSpriteConfig.load_config(path, config_type)
         if self.exists(config.get_id()): raise Exception("Try to load config repeatedly")
         self._configs[config.get_id()] = config
 
@@ -70,14 +70,14 @@ class CharacterConfigManager:
             return False
 
 
-class CharacterConfig(abc.ABC):
+class GameSpriteConfig(abc.ABC):
     def __init__(self, path: str):
         self.path = path
 
     @abstractmethod
     def parse(self, path: str) -> None:
         """
-        仅提供最基础的配置解析，子类应重写该方法以解析自己的配置文件
+        子类应重写该方法以解析自己的配置文件
         :param path: 配置文件路径
         """
         pass
@@ -91,7 +91,7 @@ class CharacterConfig(abc.ABC):
         pass
 
     @classmethod
-    def load_config(cls, path: str, config_type: ConfigType) -> CharacterConfig:
+    def load_config(cls, path: str, config_type: ConfigType) -> GameSpriteConfig:
         if config_type == "zombie":
             config = ZombieConfig(path)
         elif config_type == "animation":
@@ -100,7 +100,7 @@ class CharacterConfig(abc.ABC):
             raise Exception("Invalid config type!")
         return config
 
-class ZombieConfig(CharacterConfig):
+class ZombieConfig(GameSpriteConfig):
     def __init__(self, path: str):
         super().__init__(path)
         self.animation = None
@@ -142,7 +142,7 @@ class ZombieConfig(CharacterConfig):
         return self.config_id
 
 
-class AnimationConfig(CharacterConfig):
+class AnimationConfig(GameSpriteConfig):
     def __init__(self, path: str):
         super().__init__(path)
         self.config_id: str = ''

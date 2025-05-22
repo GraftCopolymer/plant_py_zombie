@@ -165,12 +165,12 @@ class LevelScene(AbstractScene):
         # 阳光对象列表
         self.suns: list['Sun'] = []
         # 相机初始位置
-        self.camera_init_pos = Vector2(200, 0)
+        self.camera_init_pos = Vector2(100, 0)
         self.camera.move_to(self.camera_init_pos)
         # 僵尸生成线位置（仅x坐标有效）
         self.zombie_gen_pos = Vector2(400, 0)
         # 僵尸胜利线位置, 当有僵尸到达此位置后, 游戏将失败(仅x坐标有效)
-        self.zombie_win_line = Vector2(-10, 0)
+        self.zombie_win_line = Vector2(50, 0)
         # 关卡状态
         self.level_state = LevelStateMachine()
         # 关卡交互状态
@@ -467,18 +467,18 @@ class LevelScene(AbstractScene):
                 'top': 'top'
             }
         )
-        show_win_dialog_button_rect = pygame.Rect(0, 0, 100, 60)
-        show_win_dialog_button_rect.topright = (0, 70)
-        pygame_gui.elements.UIButton(
-            relative_rect=show_win_dialog_button_rect,
-            text='显示胜利对话框',
-            manager=self.ui_manager,
-            object_id="#show_win_dialog_button",
-            anchors={
-                'right': 'right',
-                'top': 'top'
-            }
-        )
+        # show_win_dialog_button_rect = pygame.Rect(0, 0, 100, 60)
+        # show_win_dialog_button_rect.topright = (0, 70)
+        # pygame_gui.elements.UIButton(
+        #     relative_rect=show_win_dialog_button_rect,
+        #     text='显示胜利对话框',
+        #     manager=self.ui_manager,
+        #     object_id="#show_win_dialog_button",
+        #     anchors={
+        #         'right': 'right',
+        #         'top': 'top'
+        #     }
+        # )
         # 这俩的setup方法中有事件订阅, 需要在detach_scene中调用destroy方法取消订阅
         self.plant_select_container.setup()
         self.in_game_selector.setup()

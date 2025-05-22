@@ -12,7 +12,7 @@ from base.config import LAYERS
 from base.game_grid import AbstractPlantCell
 from base.sprite.game_sprite import GameSprite
 from game.character import Position
-from game.character.character_config import ZombieConfig, CharacterConfigManager
+from game.character.character_config import ZombieConfig, ConfigManager
 from game.character.zombie_state_machine import AbstractZombieStateMachine, ZombieStateMachine, \
     BucketheadZombieStateMachine, ConeheadZombieStateMachine
 from game.level.zombie_creator import ZombieCreator
@@ -322,6 +322,9 @@ class GenericZombie(AbstractZombie):
         # 处理僵尸冰冻
         if self.iced_remain_time > 0:
             self.freeze()
+            self.iced_remain_time -= dt
+        else:
+            self.set_speed_factor(1.0)
         self.handle_state(dt)
 
 
@@ -349,7 +352,7 @@ class NormalZombie(ConfigZombie):
     """
 
     def __init__(self, group: Union[pygame.sprite.Group, list]):
-        super().__init__(CharacterConfigManager().get_zombie_config('normal_zombie'), ZombieStateMachine(), group)
+        super().__init__(ConfigManager().get_zombie_config('normal_zombie'), ZombieStateMachine(), group)
         self.damage = 20
         self.attack_interval = 400
 
@@ -360,7 +363,7 @@ class BucketheadZombie(ConfigZombie):
     """
 
     def __init__(self, group: Union[pygame.sprite.Group, list]):
-        super().__init__(CharacterConfigManager().get_zombie_config('buckethead_zombie'),
+        super().__init__(ConfigManager().get_zombie_config('buckethead_zombie'),
                          BucketheadZombieStateMachine(), group)
         self.damage = 20
         self.attack_interval = 400
@@ -422,7 +425,7 @@ class ConeheadZombie(ConfigZombie):
     """
 
     def __init__(self, group: Union[pygame.sprite.Group, list]):
-        super().__init__(CharacterConfigManager().get_zombie_config('conehead_zombie'),
+        super().__init__(ConfigManager().get_zombie_config('conehead_zombie'),
                          ConeheadZombieStateMachine(), group)
         self.damage = 20
         self.attack_interval = 400

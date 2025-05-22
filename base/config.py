@@ -39,7 +39,7 @@ PLANTS_DIR = {
 }
 
 # 自然生成阳光的时间间隔范围, 单位ms
-SUN_GEN_INTERVAL_RANGE = [1000, 1500]
+SUN_GEN_INTERVAL_RANGE = [7000, 14000]
 
 # 可用植物配置文件
 AVAILABLE_PLANTS = 'resources/available_plants.json'

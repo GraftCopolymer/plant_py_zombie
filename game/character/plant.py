@@ -11,11 +11,11 @@ from base.animation import StatefulAnimation, OncePlayController
 from base.config import LAYERS
 from base.game_grid import AbstractPlantCell, GrassPlantCell, WaterPlantCell
 from base.sprite.game_sprite import GameSprite
-from game.character.bullets import Bullet
-from game.character.character_config import CharacterConfigManager
+from game.character.bullets import Bullet, JalapenoFire
+from game.character.character_config import ConfigManager
 from game.character.plant_ability import Shooter, TimingAction, StatefulPlant
 from game.character.plant_state_machine import AbstractPlantStateMachine, WallnutStateMachine, SunShroomStateMachine, \
-    CherryBombStateMachine
+    CherryBombStateMachine, JalapenoStateMachine
 from game.character.zombie import AbstractZombie
 from game.level.state_machine import StateMachine, State
 from game.level.plant_creator import PlantCreator
@@ -187,6 +187,59 @@ class GrassShooterPlant(GrassPlant, Shooter, abc.ABC):
                 return True
         return False
 
+class InstantUsedPlant(GrassPlant, StatefulPlant, abc.ABC):
+    def __init__(self, max_health: int):
+        # 建议设置一个较大的生命值，以免在使用前死亡
+        super().__init__(max_health=max_health)
+
+    def update(self, dt: float) -> None:
+        super().update(dt)
+        controller = self.animation.get_current_controller()
+        if isinstance(controller, OncePlayController):
+            if self.get_state_machine().get_state() == self.get_used_state() and controller.over:
+                # 使用完毕，删除植物
+                self.level.remove_plant(self)
+            elif self.get_state_machine().can_transition_to(self.get_used_state()) and controller.over:
+                # 使用
+                self.use()
+        else:
+            raise ValueError('InstantUsePlant的所有动画都应该是一次性的!')
+        self.handle_state(dt)
+
+    @abstractmethod
+    def use(self):
+        pass
+
+    @abstractmethod
+    def load_animation(self, *args, **kwargs) -> StatefulAnimation:
+        pass
+
+    def can_be_eaten(self):
+        if self.get_state_machine().get_state() == self.get_used_state():
+            return False
+        return True
+
+    @abstractmethod
+    def get_state_machine(self) -> AbstractPlantStateMachine:
+        pass
+
+    @abstractmethod
+    def get_ready_to_use_state(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_used_state(self) -> str:
+        pass
+
+    def handle_state(self, *args, **kwargs) -> None:
+        pass
+
+    def hurt(self, source, damage: float) -> None:
+        # 使用后不再受伤害
+        if self.get_state_machine().get_state() == self.get_used_state():
+            return
+        super().hurt(source, damage)
+
 @PlantCreator.register_plant('pea_shooter')
 class PeaShooter(GrassShooterPlant):
     """
@@ -198,7 +251,7 @@ class PeaShooter(GrassShooterPlant):
         super().__init__(200, shoot_interval=1500)
 
     def load_animation(self) -> StatefulAnimation:
-        config = CharacterConfigManager().get_animation_config("pea_shooter_animation")
+        config = ConfigManager().get_animation_config("pea_shooter_animation")
         animation = StatefulAnimation(config.get_random_animation_group(), config.init_state)
         return animation
 
@@ -248,7 +301,7 @@ class MachineGunShooter(GrassShooterPlant):
         assert 3 * self.pea_number_per_turn <= self.shoot_interval
 
     def load_animation(self) -> StatefulAnimation:
-        config = CharacterConfigManager().get_animation_config("machine_gun_shooter_animation")
+        config = ConfigManager().get_animation_config("machine_gun_shooter_animation")
         animation = StatefulAnimation(config.get_random_animation_group(), config.init_state)
         return animation
 
@@ -295,7 +348,7 @@ class IcedPeaShooter(GrassShooterPlant):
         super().__init__(200, shoot_interval=1000)
 
     def load_animation(self) -> StatefulAnimation:
-        config = CharacterConfigManager().get_animation_config("iced_pea_shooter_animation")
+        config = ConfigManager().get_animation_config("iced_pea_shooter_animation")
         animation = StatefulAnimation(config.get_random_animation_group(), config.init_state)
         return animation
 
@@ -331,9 +384,9 @@ class SunFlower(GrassPlant, TimingAction):
     # 种植冷却, 所有对象共享, 单位ms
     plant_cold_down = 10000
     # 最小阳光生成间隔
-    min_sun_produce_interval = 4000
+    min_sun_produce_interval = 7000
     # 最大阳光生成间隔
-    max_sun_produce_interval = 7000
+    max_sun_produce_interval = 10000
     def __init__(self):
         super().__init__(max_health=150)
         # 产生阳光冷却计时器, 单位ms
@@ -341,7 +394,7 @@ class SunFlower(GrassPlant, TimingAction):
         self.current_action_interval = self.getNextActionInterval()
 
     def load_animation(self) -> StatefulAnimation:
-        config = CharacterConfigManager().get_animation_config("sun_flower_animation")
+        config = ConfigManager().get_animation_config("sun_flower_animation")
         animation = StatefulAnimation(config.get_random_animation_group(), config.init_state)
         return animation
 
@@ -383,7 +436,7 @@ class Wallnut(GrassPlant, StatefulPlant):
         self.state_machine = WallnutStateMachine()
 
     def load_animation(self) -> StatefulAnimation:
-        config = CharacterConfigManager().get_animation_config("wallnut_animation")
+        config = ConfigManager().get_animation_config("wallnut_animation")
         animation = StatefulAnimation(config.get_random_animation_group(), config.init_state)
         return animation
 
@@ -416,11 +469,11 @@ class SunShroom(GrassPlant, StatefulPlant, TimingAction):
     sun_cost = 25
     plant_cold_down = 7000
     # 最小阳光生成间隔
-    min_sun_produce_interval = 4000
+    min_sun_produce_interval = 6000
     # 最大阳光生成间隔
-    max_sun_produce_interval = 7000
+    max_sun_produce_interval = 10000
     # 生长时间
-    grow_time = 10000
+    grow_time = 40000
     def __init__(self):
         super().__init__(max_health=100)
         self.state_machine = SunShroomStateMachine()
@@ -444,7 +497,7 @@ class SunShroom(GrassPlant, StatefulPlant, TimingAction):
         self.handle_state(dt)
 
     def load_animation(self, *args, **kwargs) -> StatefulAnimation:
-        config = CharacterConfigManager().get_animation_config('sun_shroom_animation')
+        config = ConfigManager().get_animation_config('sun_shroom_animation')
         return StatefulAnimation(config.get_random_animation_group(), config.init_state)
 
     def grow(self):
@@ -491,35 +544,21 @@ class SunShroom(GrassPlant, StatefulPlant, TimingAction):
         sun.setup_sprite(self.level, revise=False)
 
 @PlantCreator.register_plant('cherry_bomb')
-class CherryBomb(GrassPlant, StatefulPlant):
+class CherryBomb(InstantUsedPlant):
     """
     樱桃炸弹，爆炸前摇取决于动画长度，动画执行完毕后爆炸
     """
-
     sun_cost = 150
     plant_cold_down = 15000
     # 爆炸伤害
     damage = 999999
+
     def __init__(self):
         # 设置一个较大的生命值，以免在爆炸前死亡
         super().__init__(max_health=4000)
         self.state_machine = CherryBombStateMachine()
 
-    def update(self, dt: float) -> None:
-        super().update(dt)
-        controller = self.animation.get_current_controller()
-        if isinstance(controller, OncePlayController):
-            if self.get_state_machine().get_state() == 'boomed' and controller.over:
-                # 爆炸完毕，删除植物
-                self.level.remove_plant(self)
-            elif self.get_state_machine().can_transition_to('boomed') and controller.over:
-                # 爆炸
-                self.boom()
-        else:
-            raise ValueError('樱桃炸弹的所有动画都应该是一次性的!')
-        self.handle_state(dt)
-
-    def boom(self):
+    def use(self):
         if self.get_state_machine().can_transition_to('boomed'):
             self.get_state_machine().transition_to('boomed')
             self.animation.change_state(self.get_state_machine().get_state())
@@ -531,26 +570,56 @@ class CherryBomb(GrassPlant, StatefulPlant):
                     if hasattr(z, 'boom_dying') and callable(getattr(z, 'boom_dying')):
                         z.boom_dying()
 
-    def load_animation(self, *args, **kwargs) -> StatefulAnimation:
-        config = CharacterConfigManager().get_animation_config('cherry_bomb_animation')
-        return StatefulAnimation(config.get_random_animation_group(), config.init_state)
+    def get_ready_to_use_state(self) -> str:
+        return 'ready_to_boom'
 
-    def can_be_eaten(self):
-        if self.get_state_machine().get_state() == 'boomed':
-            return False
-        return True
+    def get_used_state(self) -> str:
+        return 'boomed'
+
+    def load_animation(self, *args, **kwargs) -> StatefulAnimation:
+        config = ConfigManager().get_animation_config('cherry_bomb_animation')
+        return StatefulAnimation(config.get_random_animation_group(), config.init_state)
 
     def get_state_machine(self) -> AbstractPlantStateMachine:
         return self.state_machine
 
-    def handle_state(self, *args, **kwargs) -> None:
-        pass
+@PlantCreator.register_plant('jalapeno')
+class Jalapeno(InstantUsedPlant):
+    """
+    火爆辣椒
+    """
+    sun_cost = 125
+    plant_cold_down = 10000
+    def __init__(self):
+        super().__init__(max_health=4000)
+        self.state_machine = JalapenoStateMachine()
 
-    def hurt(self, source, damage: float) -> None:
-        # 爆炸后不再受伤害
-        if self.get_state_machine().get_state() == 'boomed':
-            return
-        super().hurt(source, damage)
+    def use(self):
+        if self.get_state_machine().can_transition_to('fired'):
+            self.get_state_machine().transition_to('fired')
+            self.animation.change_state(self.get_state_machine().get_state())
+            fire_bullet = JalapenoFire()
+            fire_bullet.setup_sprite(self.level.camera, self, self.level)
+
+            # 检测附近僵尸，检测形状为AABB矩形
+            extend_rect = self.rect.copy().inflate(100, 100)
+            for z in self.level.zombies:
+                if extend_rect.colliderect(z.rect):
+                    if hasattr(z, 'boom_dying') and callable(getattr(z, 'boom_dying')):
+                        z.boom_dying()
+
+    def load_animation(self, *args, **kwargs) -> StatefulAnimation:
+        config = ConfigManager().get_animation_config('jalapeno_animation')
+        return StatefulAnimation(config.get_random_animation_group(), config.init_state)
+
+    def get_state_machine(self) -> AbstractPlantStateMachine:
+        return self.state_machine
+
+    def get_ready_to_use_state(self) -> str:
+        return 'ready_to_fire'
+
+    def get_used_state(self) -> str:
+        return 'fired'
 
 
 class PlantAnimator(abc.ABC):

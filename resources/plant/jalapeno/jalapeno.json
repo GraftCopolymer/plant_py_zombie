@@ -1,0 +1,21 @@
+{
+  "id": "jalapeno_animation",
+  "animations": {
+    "ready_to_fire": [
+      {
+        "type": "gif",
+        "frames": "./Jalapeno.gif",
+        "interval": 110,
+        "play_mode": "once"
+      }
+    ],
+    "fired": [
+      {
+        "type": "multi_image",
+        "frames": ["./Fired.png"],
+        "interval": 0,
+        "play_mode": "once"
+      }
+    ]
+  }
+}
