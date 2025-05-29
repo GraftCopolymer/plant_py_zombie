@@ -12,7 +12,7 @@ from utils.utils import transform_coor_sys
 
 if TYPE_CHECKING:
     from base.game_event import SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, \
-    PlantCardEndColdDown, SunCollectEvent
+    PlantCardEndColdDownEvent, SunCollectEvent
 from game.ui.plant_card import PlantCard
 
 
@@ -46,26 +46,26 @@ class InGamePlantSelector(UIWidget):
 
     def mount(self) -> None:
         from base.game_event import EventBus, SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, \
-            PlantCardEndColdDown, SunCollectEvent
+            PlantCardEndColdDownEvent, SunCollectEvent
         # 订阅从植物选择器选择植物卡片的事件
         EventBus().subscribe(SelectPlantCardToBankEvent, self._on_add_plant_card_from_selector)
         EventBus().subscribe(ClickEvent, self._on_click)
         EventBus().subscribe(StartFightEvent, self._on_level_start)
         EventBus().subscribe(StopPlantEvent, self._on_stop_planting)
-        EventBus().subscribe(PlantCardEndColdDown, self._on_plant_card_end_cold_down)
+        EventBus().subscribe(PlantCardEndColdDownEvent, self._on_plant_card_end_cold_down)
         # 阳光收集事件
         EventBus().subscribe(SunCollectEvent, self._on_collect_sun)
 
     def unmount(self):
         self.ui_manager.clear_and_reset()
         from base.game_event import EventBus, SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, \
-            PlantCardEndColdDown, SunCollectEvent
+            PlantCardEndColdDownEvent, SunCollectEvent
         # 取消事件订阅
         EventBus().unsubscribe(SelectPlantCardToBankEvent, self._on_add_plant_card_from_selector)
         EventBus().unsubscribe(ClickEvent, self._on_click)
         EventBus().unsubscribe(StartFightEvent, self._on_level_start)
         EventBus().unsubscribe(StopPlantEvent, self._on_stop_planting)
-        EventBus().unsubscribe(PlantCardEndColdDown, self._on_plant_card_end_cold_down)
+        EventBus().unsubscribe(PlantCardEndColdDownEvent, self._on_plant_card_end_cold_down)
         EventBus().unsubscribe(SunCollectEvent, self._on_collect_sun)
         print(f'组件InGamePlantSelector取消订阅')
 
@@ -181,7 +181,7 @@ class InGamePlantSelector(UIWidget):
                     c.cold_down_start()
                     break
 
-    def _on_plant_card_end_cold_down(self, event: 'PlantCardEndColdDown'):
+    def _on_plant_card_end_cold_down(self, event: 'PlantCardEndColdDownEvent'):
         card = event.plant_card
         if self.sun_value.value >= card.plant_cls.sun_cost:
             card.enable()

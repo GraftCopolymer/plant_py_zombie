@@ -248,7 +248,7 @@ class PlantCardStartColdDown(Event):
         super().__init__()
         self.plant_card = card
 
-class PlantCardEndColdDown(Event):
+class PlantCardEndColdDownEvent(Event):
     """
     植物卡片冷却结束
     """

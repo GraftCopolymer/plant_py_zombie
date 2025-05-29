@@ -93,8 +93,8 @@ class PlantCard(GameSprite):
         self.cold_down = False
         self.cold_down_timer = 0
         # 发布冷却结束事件
-        from base.game_event import EventBus, PlantCardEndColdDown
-        EventBus().publish(PlantCardEndColdDown(self))
+        from base.game_event import EventBus, PlantCardEndColdDownEvent
+        EventBus().publish(PlantCardEndColdDownEvent(self))
 
     def __copy__(self):
         cls = self.__class__
