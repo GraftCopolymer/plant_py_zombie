@@ -7,6 +7,7 @@ from base.game_event import ButtonClickEvent, EventBus
 from base.scene import AbstractScene, SceneManager
 from game.level.level_creator import LevelCreator
 from game.level.level_scene import LevelScene
+from game.ui.album import Album
 from game.ui.level_select_scene import LevelSelectScene
 from game.ui.plant_select_container import PlantSelectContainer
 from utils.utils import create_ui_manager_with_theme
@@ -61,24 +62,35 @@ class MainMenuScene(AbstractScene):
                 'bottom': 'bottom'
             }
         )
+        # 图鉴按钮
+        album_button_rect = Rect(0, 0, 70, 30)
+        album_button_rect.bottomright = (-110, -60)
+        album_button = UIButton(
+            relative_rect=album_button_rect,
+            text='图鉴',
+            manager=self.ui_manager,
+            object_id='#album_button',
+            anchors={
+                'right': 'right',
+                'bottom': 'bottom'
+            }
+        )
         # self.plant_select_container.setup()
 
     def mount(self):
-        EventBus().subscribe(ButtonClickEvent, self._on_exit_game)
-        EventBus().subscribe(ButtonClickEvent, self._on_start_game)
+        EventBus().subscribe(ButtonClickEvent, self._on_button_clicked)
 
     def unmount(self):
-        EventBus().unsubscribe(ButtonClickEvent, self._on_exit_game)
-        EventBus().unsubscribe(ButtonClickEvent, self._on_start_game)
-        print(f'页面MainMenuScene取消订阅')
+        EventBus().unsubscribe(ButtonClickEvent, self._on_button_clicked)
 
-    def _on_exit_game(self, event: ButtonClickEvent):
-        if "#exit_game_button" in event.ui_element.object_ids:
+    def _on_button_clicked(self, event: ButtonClickEvent):
+        ids = event.ui_element.object_ids
+        if "#start_game_button" in ids:
+            SceneManager().push_scene(LevelSelectScene())
+        elif '#album_button' in ids:
+            SceneManager().push_scene(Album())
+        elif "#exit_game_button" in ids:
             from game.game import Game
             Game.end()
 
-    def _on_start_game(self, event: ButtonClickEvent):
-        if "#start_game_button" in event.ui_element.object_ids:
-            # SceneManager().push_scene(LevelCreator.create_level('night_level'))
-            SceneManager().push_scene(LevelSelectScene())
 

@@ -3,10 +3,12 @@ from typing import Union, TYPE_CHECKING
 
 import pygame
 from pygame import Vector2, Surface
+from pygame.examples.testsprite import Static
 from pygame_gui.core import ObjectID
 
 from base.config import FONT_PATH
 from base.listenable import ListenableValue
+from base.sprite.static_sprite import StaticSprite
 from game.ui.ui_widget import UIWidget
 from utils.utils import transform_coor_sys
 
@@ -40,9 +42,13 @@ class InGamePlantSelector(UIWidget):
 
             # 当前选择器的状态，为True时点击卡片将会进入植物放置阶段
             self.can_place_plant = False
+        font = pygame.font.Font(FONT_PATH, 14)
+        text = font.render(f'{self.sun_value.value}', True, pygame.Color(0, 0, 0, 255))
+        self.text_spr = StaticSprite([], text, Vector2(38 - text.width / 2, 75 - text.height / 2))
         super().__init__(
             object_id, pygame.image.load(self.background_path)
         )
+        self.add_sprite(self.text_spr)
 
     def mount(self) -> None:
         from base.game_event import EventBus, SelectPlantCardToBankEvent, ClickEvent, StartFightEvent, StopPlantEvent, \
@@ -81,18 +87,16 @@ class InGamePlantSelector(UIWidget):
 
     def draw(self, surface: Surface):
         super().draw(surface)
-        self._draw_sun_text()
 
-    def _draw_sun_text(self):
-        """
-        绘制阳光数量文本
-        """
+    def _update_sun_text(self):
         font = pygame.font.Font(FONT_PATH, 14)
-        text = font.render(f'{self.sun_value.value}', True, pygame.Color(0, 0, 0))
-        self.draw_to_spr(text, Vector2(38 - text.width / 2, 75 - text.height / 2))
+        text = font.render(f'{self.sun_value.value}', True, pygame.Color(0, 0, 0, 255))
+        self.text_spr.image = text
+        self.text_spr.set_position(Vector2(38 - text.width / 2, 75 - text.height / 2))
 
     def update(self, dt: float):
         self.update_cards(dt)
+        self._update_sun_text()
 
     def update_cards(self, dt: float):
         for c in self.cards:

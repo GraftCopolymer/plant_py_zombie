@@ -5,7 +5,7 @@ from typing import Optional
 
 import pygame.image
 import pygame_gui
-from pygame import Surface, Vector2, Color
+from pygame import Surface, Vector2, Color, SRCALPHA
 
 from base.sprite.game_sprite import GameSprite
 from utils.utils import create_ui_manager_with_theme
@@ -29,10 +29,10 @@ class UIWidget(abc.ABC):
         if not background and size:
             self._size = size
         elif background:
-            self._size = Vector2(self.background.get_bounding_rect().size)
+            self._size = Vector2(self.background.get_rect().size)
         self._rect = pygame.Rect(int(self.screen_pos.x), int(self.screen_pos.y), self._size.x, self._size.y)
         # 精灵容器
-        self.sprite_container: Surface = Surface(self._size)
+        self.sprite_container: Surface = Surface(self._size, SRCALPHA)
         self.sprite_container.fill(self.background_color)
         # ui manager
         from game.game import Game
@@ -113,14 +113,15 @@ class UIWidget(abc.ABC):
     def draw(self, surface: Surface) -> None:
         if not self.visible:
             return
-        surface.blit(self.sprite_container, self.screen_pos)
         # 将背景绘制到自身位置
         if self.background:
             self.draw_to_spr(self.background, Vector2(0, 0))
         else:
             self.sprite_container.fill(self.background_color)
         self.draw_sprites()
+        surface.blit(self.sprite_container, self.screen_pos)
         self.ui_manager.draw_ui(surface)
+
 
     def draw_sprites(self):
         """

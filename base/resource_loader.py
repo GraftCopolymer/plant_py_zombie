@@ -116,7 +116,6 @@ class ResourceLoader:
 
             self._themes.append(json_path)
             ui_manager.get_theme().load_theme(json_path)
-            print(f'已加载主题文件: {json_path}')
 
     def get_bullet_image(self, bullet_name: str) -> Surface:
         return self._bullets[bullet_name]
