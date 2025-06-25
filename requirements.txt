@@ -1,0 +1,5 @@
+pillow==11.1.0
+pygame==2.6.1
+pygame-ce==2.5.3
+pygame-gui==0.6.13
+pytmx==3.32
